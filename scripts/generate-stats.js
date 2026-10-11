@@ -108,6 +108,15 @@ async function getContributionYears(username) {
 }
 
 async function getContributionPeriod(username, from, to) {
+  const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+
+  if (to.getTime() - from.getTime() > oneYearMs) {
+    throw new Error(
+      `Contribution date range exceeds one year: ` +
+      `${from.toISOString()} to ${to.toISOString()}`
+    );
+  }
+
   const query = `
     query($username: String!, $from: DateTime!, $to: DateTime!) {
       user(login: $username) {
@@ -168,11 +177,12 @@ async function getContributionStats(username) {
   const yearly = [];
 
   for (let year = earliestYear; year <= currentYear; year++) {
+    // Each request covers one calendar year only.
     const from = new Date(Date.UTC(year, 0, 1));
 
     const to = year === currentYear
       ? now
-      : new Date(Date.UTC(year + 1, 0, 1));
+      : new Date(Date.UTC(year + 1, 0, 1) - 1000);
 
     const collection = await getContributionPeriod(
       username,
@@ -279,11 +289,14 @@ async function main() {
   const profile = await github("/user");
   const username = profile.login;
 
-  // DIAGNOSTIC: test the contribution calendar returned by GitHub.
+  // Diagnostic: request only the current calendar year to date.
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
+
   const contributionTest = await getContributionPeriod(
     username,
-    new Date(Date.UTC(2025, 0, 1)),
-    new Date()
+    new Date(Date.UTC(currentYear, 0, 1)),
+    now
   );
 
   console.log("CONTRIBUTION PERMISSION TEST:", {

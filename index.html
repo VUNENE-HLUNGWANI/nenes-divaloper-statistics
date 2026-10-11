@@ -40,8 +40,7 @@
       line-height: 1.6;
     }
 
-    button,
-    a {
+    button, a {
       font: inherit;
     }
 
@@ -65,9 +64,17 @@
       border-bottom: 1px solid var(--border);
     }
 
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
     .brand {
       font-weight: 800;
       letter-spacing: -0.5px;
+      overflow-wrap: anywhere;
     }
 
     .brand span,
@@ -101,9 +108,11 @@
       grid-template-columns: 94px minmax(0, 1fr);
       align-items: center;
       column-gap: 24px;
+      min-width: 0;
     }
 
     .avatar {
+      display: block;
       width: 94px;
       height: 94px;
       border-radius: 50%;
@@ -127,6 +136,7 @@
       width: 100%;
       font-size: 1.2rem;
       font-weight: 800;
+      line-height: 1.4;
       overflow-wrap: anywhere;
     }
 
@@ -149,7 +159,7 @@
       background: #201329;
       font-size: 0.85rem;
       font-weight: 700;
-      transition: 0.2s;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
     }
 
     .github-link:hover {
@@ -185,6 +195,7 @@
       line-height: 1.1;
       letter-spacing: -2px;
       margin: 10px 0 14px;
+      color: var(--text);
       overflow-wrap: anywhere;
     }
 
@@ -357,13 +368,13 @@
       font-size: 0.9rem;
     }
 
-    .language-label strong,
-    .language-label span {
+    .language-label strong {
       overflow-wrap: anywhere;
     }
 
     .language-label span {
       text-align: right;
+      overflow-wrap: anywhere;
     }
 
     .bar {
@@ -412,6 +423,67 @@
 
     .graph-legend .contribution-day {
       display: inline-block;
+    }
+
+    .detail-group {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #24152e;
+    }
+
+    .detail-group > summary {
+      cursor: pointer;
+      list-style: none;
+      border: 0;
+      background: transparent;
+    }
+
+    .detail-group > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .detail-group > summary strong::before {
+      content: "▸ ";
+      color: var(--pink-light);
+    }
+
+    .detail-group[open] > summary strong::before {
+      content: "▾ ";
+    }
+
+    .detail-sub {
+      display: grid;
+      gap: 8px;
+      padding: 0 15px 15px;
+    }
+
+    .detail-sub .detail-item {
+      background: #1b1023;
+    }
+
+    .year-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 6px;
+    }
+
+    .year-tab {
+      cursor: pointer;
+      color: var(--text);
+      background: #24152e;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .year-tab:hover,
+    .year-tab.active {
+      border-color: var(--pink);
+      background: var(--pink);
+      color: white;
     }
 
     .notice {
@@ -532,7 +604,7 @@
 
 <body>
   <header>
-    <div class="container">
+    <div class="container nav">
       <div class="brand">
         NENE'S <span>DIVALOPER</span> GITHUB STATISTICS
       </div>
@@ -556,7 +628,6 @@
             <div id="profile-name" class="profile-name">
               Vunene Hlungwani
             </div>
-
             <div id="profile-login" class="muted">
               @VUNENE-HLUNGWANI
             </div>
@@ -577,13 +648,12 @@
 
     <section class="hero" aria-labelledby="dashboard-heading">
       <div class="eyebrow">MY PROGRESS. MY JOURNEY.</div>
-
       <h1 id="dashboard-heading">MY GITHUB DASHBOARD.</h1>
 
       <p class="intro">
-        A visual summary of my GitHub contributions, projects,
-        programming languages and development activity.
-        Every contribution is another step forward.
+        A visual summary of my GitHub contributions, projects, programming
+        languages and development activity. Every contribution is another
+        step forward.
       </p>
 
       <div class="status">
@@ -599,97 +669,57 @@
       </div>
 
       <div class="stats-grid" id="stats-grid">
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="contributions"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">📈</span>
+        <button class="stat-card" type="button" data-detail="contributions" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">📈</span>
           <span class="stat-value" id="contribution-count">—</span>
           <span class="stat-label">Contributions</span>
-          <span class="stat-hint">Last 365 days</span>
+          <span class="stat-hint">All-time total</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="repositories"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">📁</span>
+        <button class="stat-card" type="button" data-detail="repositories" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">📁</span>
           <span class="stat-value" id="repo-count">—</span>
           <span class="stat-label">Repositories</span>
           <span class="stat-hint">Public + private</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="commits"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">💻</span>
+        <button class="stat-card" type="button" data-detail="commits" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">💻</span>
           <span class="stat-value" id="commit-count">—</span>
-          <span class="stat-label">Repository commits</span>
-          <span class="stat-hint">Commits authored in accessible repositories</span>
+          <span class="stat-label">Commit contributions</span>
+          <span class="stat-hint">All-time total</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="languages"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">🧠</span>
+        <button class="stat-card" type="button" data-detail="languages" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🧠</span>
           <span class="stat-value" id="language-count">—</span>
           <span class="stat-label">Languages</span>
           <span class="stat-hint">Public + private aggregate</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="issues"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">🧩</span>
+        <button class="stat-card" type="button" data-detail="issues" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🧩</span>
           <span class="stat-value" id="issue-count">—</span>
           <span class="stat-label">Issues</span>
           <span class="stat-hint">All authored issues</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="pulls"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">🔀</span>
+        <button class="stat-card" type="button" data-detail="pulls" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🔀</span>
           <span class="stat-value" id="pr-count">—</span>
           <span class="stat-label">Pull requests</span>
           <span class="stat-hint">All authored PRs</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="stars"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">⭐</span>
+        <button class="stat-card" type="button" data-detail="stars" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">⭐</span>
           <span class="stat-value" id="star-count">—</span>
           <span class="stat-label">Stars</span>
           <span class="stat-hint">Repository stars</span>
         </button>
 
-        <button
-          class="stat-card"
-          type="button"
-          data-detail="forks"
-          aria-pressed="false"
-        >
-          <span class="stat-icon">🍴</span>
+        <button class="stat-card" type="button" data-detail="forks" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🍴</span>
           <span class="stat-value" id="fork-count">—</span>
           <span class="stat-label">Forks</span>
           <span class="stat-hint">Forks of your repositories</span>
@@ -704,22 +734,20 @@
       aria-labelledby="detail-title"
     >
       <h2 id="detail-title">Contribution history</h2>
-
       <p class="detail-description" id="detail-description">
         Loading your statistics...
       </p>
-
       <div class="detail-list" id="detail-content">
         <p class="muted">Loading data from stats.json...</p>
       </div>
     </section>
 
     <p class="notice">
-      Statistics include data from accessible repositories where GitHub
-      makes it available. Only public repository names, descriptions and
-      links are displayed. Private repository identities are not shown.
-      GitHub contribution-graph totals and repository commit-history totals
-      are different metrics.
+      Statistics include accessible public and private repository data where
+      GitHub makes it available. Only public repository names, descriptions
+      and links are displayed. Private repository identities are not shown.
+      Aggregate language statistics from private repositories are included
+      in the public dashboard.
     </p>
   </main>
 
@@ -733,16 +761,19 @@
 
   <script>
     const $ = id => document.getElementById(id);
-
     let statistics = null;
 
-    const number = value =>
-      value === null ||
-      value === undefined ||
-      value === "" ||
-      !Number.isFinite(Number(value))
-        ? "Unavailable"
-        : Number(value).toLocaleString();
+    function number(value) {
+      if (value === null || value === undefined || value === "") {
+        return "Unavailable";
+      }
+
+      const parsed = Number(value);
+
+      return Number.isFinite(parsed)
+        ? parsed.toLocaleString()
+        : "Unavailable";
+    }
 
     function addItem(label, value, url) {
       const row = document.createElement("div");
@@ -766,114 +797,185 @@
       amount.textContent = String(value ?? "Unavailable");
 
       row.append(name, amount);
-
       return row;
     }
 
-    function addDailyGraph(days, panel, period) {
-      const title = document.createElement("h3");
+    function addGroup(label, value, rows, open) {
+      if (!rows.length) {
+        return addItem(label, value);
+      }
 
-      title.textContent = typeof period === "number"
-        ? `Daily contributions in ${period}`
-        : "Daily contributions across full account history";
+      const details = document.createElement("details");
+      details.className = "detail-group";
+      details.open = Boolean(open);
 
-      panel.appendChild(title);
+      const summary = document.createElement("summary");
+      summary.className = "detail-item";
 
+      const name = document.createElement("strong");
+      name.textContent = label;
+
+      const amount = document.createElement("span");
+      amount.className = "detail-value";
+      amount.textContent = String(value ?? "Unavailable");
+
+      summary.append(name, amount);
+      details.appendChild(summary);
+
+      const inner = document.createElement("div");
+      inner.className = "detail-sub";
+
+      for (const row of rows) {
+        inner.appendChild(row);
+      }
+
+      details.appendChild(inner);
+      return details;
+    }
+
+    function drawGraph(days, holder, label) {
       if (!Array.isArray(days) || days.length === 0) {
-        panel.appendChild(
+        holder.appendChild(
           addItem("Daily contribution data", "Unavailable")
         );
         return;
       }
 
-      const scroll = document.createElement("div");
-      scroll.className = "graph-scroll";
+      const graphScroll = document.createElement("div");
+      graphScroll.className = "graph-scroll";
 
       const graph = document.createElement("div");
       graph.className = "contribution-graph";
       graph.setAttribute("role", "group");
-
       graph.setAttribute(
         "aria-label",
-        typeof period === "number"
-          ? `Daily contribution graph for ${period}`
-          : "Daily contribution graph across full account history"
+        `Daily contribution graph for ${label}`
       );
 
-      // GitHub's contribution calendar uses Sunday-first week columns.
-      // weekday: Sunday = 0, Monday = 1, ..., Saturday = 6.
-      const firstWeekday = Number(days[0].weekday);
+      const maximum = Math.max(
+        1,
+        ...days.map(day => Number(day.count || 0))
+      );
 
-      if (
-        Number.isInteger(firstWeekday) &&
-        firstWeekday >= 0 &&
-        firstWeekday <= 6
-      ) {
-        for (let i = 0; i < firstWeekday; i++) {
-          const blank = document.createElement("div");
-          blank.setAttribute("aria-hidden", "true");
-          blank.style.visibility = "hidden";
-          graph.appendChild(blank);
-        }
-      }
-
-      const levelColors = {
-        NONE: "#3a2942",
-        FIRST_QUARTILE: "#77315f",
-        SECOND_QUARTILE: "#b52b7a",
-        THIRD_QUARTILE: "#e83a9b",
-        FOURTH_QUARTILE: "#ff72bd"
-      };
-
-      for (const day of days) {
+      days.forEach((day, index) => {
         const count = Number(day.count || 0);
-
         const cell = document.createElement("div");
-        cell.className = "contribution-day";
 
+        cell.className = "contribution-day";
         cell.title = `${day.date}: ${count} contributions`;
         cell.setAttribute("role", "img");
         cell.setAttribute("aria-label", cell.title);
 
-        cell.style.background =
-          levelColors[day.level] ||
-          (count > 0
-            ? levelColors.FIRST_QUARTILE
-            : levelColors.NONE);
+        if (count > 0) {
+          const intensity = count / maximum;
+
+          if (intensity < 0.25) {
+            cell.style.background = "#77315f";
+          } else if (intensity < 0.5) {
+            cell.style.background = "#b52b7a";
+          } else if (intensity < 0.75) {
+            cell.style.background = "#e83a9b";
+          } else {
+            cell.style.background = "#ff72bd";
+          }
+        }
+
+        // Start the first column on the correct weekday, like GitHub.
+        if (index === 0) {
+          cell.style.gridRowStart = String(Number(day.weekday || 0) + 1);
+        }
 
         graph.appendChild(cell);
-      }
+      });
 
-      scroll.appendChild(graph);
-      panel.appendChild(scroll);
+      graphScroll.appendChild(graph);
+      holder.appendChild(graphScroll);
 
       const legend = document.createElement("div");
       legend.className = "graph-legend";
-      legend.append("Less ");
+      legend.textContent = "Less ";
 
-      [
+      const colors = [
         "#3a2942",
         "#77315f",
         "#b52b7a",
         "#e83a9b",
         "#ff72bd"
-      ].forEach(color => {
+      ];
+
+      for (const color of colors) {
         const cell = document.createElement("span");
         cell.className = "contribution-day";
         cell.style.background = color;
         cell.setAttribute("aria-hidden", "true");
         legend.appendChild(cell);
-      });
+      }
 
       const more = document.createElement("span");
       more.textContent = " More";
-
       legend.appendChild(more);
-      panel.appendChild(legend);
+
+      holder.appendChild(legend);
+    }
+
+    function addContributionExplorer(contributions, panel) {
+      const options = [
+        {
+          label: "Last 365 days",
+          days: contributions.last365DaysCalendar || [],
+          total: contributions.last365Days
+        }
+      ];
+
+      const years = [...(contributions.yearly || [])]
+        .sort((a, b) => b.year - a.year);
+
+      for (const year of years) {
+        options.push({
+          label: String(year.year),
+          days: year.days || [],
+          total: year.total
+        });
+      }
+
+      const title = document.createElement("h3");
+      const tabs = document.createElement("div");
+      tabs.className = "year-tabs";
+      const holder = document.createElement("div");
+
+      const buttons = [];
+
+      function render(option) {
+        buttons.forEach(button => {
+          button.classList.toggle(
+            "active",
+            button.textContent === option.label
+          );
+        });
+
+        title.textContent =
+          `${number(option.total)} contributions · ${option.label}`;
+
+        holder.replaceChildren();
+        drawGraph(option.days, holder, option.label);
+      }
+
+      for (const option of options) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "year-tab";
+        button.textContent = option.label;
+        button.addEventListener("click", () => render(option));
+        buttons.push(button);
+        tabs.appendChild(button);
+      }
+
+      panel.append(title, tabs, holder);
+      render(options[0]);
     }
 
     function addLanguageBreakdown(languages, panel) {
-      if (!Array.isArray(languages) || !languages.length) {
+      if (!Array.isArray(languages) || languages.length === 0) {
         panel.appendChild(
           addItem("Languages", "No language data available")
         );
@@ -891,7 +993,7 @@
       for (const language of languages) {
         const bytes = Number(language.bytes || 0);
 
-        const percentage = totalBytes
+        const percentage = totalBytes > 0
           ? bytes / totalBytes * 100
           : 0;
 
@@ -931,10 +1033,13 @@
     }
 
     function showDetail(type) {
-      if (!statistics) return;
+      if (!statistics) {
+        return;
+      }
 
       document.querySelectorAll(".stat-card").forEach(card => {
         const active = card.dataset.detail === type;
+
         card.classList.toggle("active", active);
         card.setAttribute("aria-pressed", String(active));
       });
@@ -945,144 +1050,136 @@
       const heading = $("detail-title");
       const description = $("detail-description");
 
-      const c = statistics.contributions || {};
-      const r = statistics.repositories || {};
-      const a = statistics.activity || {};
+      const contributions = statistics.contributions || {};
+      const repositories = statistics.repositories || {};
+      const activity = statistics.activity || {};
+
+      const publicDetails = repositories.publicDetails || [];
+
+      // Newest year first, every year from the account start.
+      const years = [...(contributions.yearly || [])]
+        .sort((a, b) => b.year - a.year);
 
       if (type === "contributions") {
         heading.textContent = "📈 Contribution history";
 
         description.textContent =
-          "Full GitHub account contribution history from the account " +
-          "creation year through the current year. Every yearly graph " +
-          "includes active and inactive days. Contributions include " +
-          "account-wide activity from public and private repositories " +
-          "where GitHub exposes it.";
+          "Total contributions with every year listed, plus the daily graph for the last 365 days or any year.";
 
         panel.appendChild(
-          addItem(
-            "Contributions in the last 365 days",
-            number(c.last365Days)
+          addGroup(
+            "All-time contributions",
+            number(contributions.allTime),
+            years.map(year =>
+              addItem(
+                String(year.year),
+                `${number(year.total)} contributions`
+              )
+            ),
+            true
           )
         );
 
-        panel.appendChild(
-          addItem(
-            "All-time calendar-year total",
-            number(c.allTime)
-          )
-        );
-
-        for (
-          const year of [...(c.yearly || [])]
-            .sort((x, y) => x.year - y.year)
-        ) {
-          panel.appendChild(
-            addItem(
-              String(year.year),
-              `${number(year.total)} contributions`
-            )
-          );
-
-          addDailyGraph(year.days || [], panel, year.year);
-        }
+        addContributionExplorer(contributions, panel);
       }
 
       if (type === "repositories") {
         heading.textContent = "📁 Repository breakdown";
 
         description.textContent =
-          "Public and private repository totals. " +
-          "Only public repository details are listed.";
+          "Click Public or Private to see what is inside. Only public repository details are listed.";
 
         panel.appendChild(
-          addItem("Total repositories", number(r.total))
+          addItem("Total repositories", number(repositories.total))
         );
 
         panel.appendChild(
-          addItem("Public repositories", number(r.public))
+          addGroup(
+            "Public repositories",
+            number(repositories.public),
+            publicDetails.map(repo =>
+              addItem(
+                repo.name,
+                `${number(repo.stars)} stars · ` +
+                `${number(repo.forks)} forks · ` +
+                `${repo.language || "Other"}`,
+                repo.url
+              )
+            )
+          )
         );
 
-        panel.appendChild(
-          addItem("Private repositories", number(r.private))
-        );
+        const privateRows = [];
 
-        for (const repo of r.publicDetails || []) {
-          panel.appendChild(
+        if (Number(repositories.private) > 0) {
+          privateRows.push(
             addItem(
-              repo.name,
-              `${number(repo.stars)} stars · ` +
-              `${number(repo.forks)} forks · ` +
-              `${repo.language || "Other"}`,
-              repo.url
+              "Private repository names are not displayed",
+              `${number(repositories.private)} hidden`
             )
           );
         }
+
+        panel.appendChild(
+          addGroup(
+            "Private repositories",
+            number(repositories.private),
+            privateRows
+          )
+        );
       }
 
       if (type === "commits") {
-        heading.textContent = "💻 Repository commits";
+        heading.textContent = "💻 Commit contributions";
 
         description.textContent =
-          "Commits authored by your GitHub account in accessible " +
-          "repository default branches. This is separate from your " +
-          "whole-account contribution total.";
+          "Commit contributions per year (as GitHub counts them on your profile), plus the real commit count authored on default branches.";
 
         panel.appendChild(
-          addItem(
-            "Commits across accessible repositories",
-            number((statistics.repositoryCommits || {}).total)
+          addGroup(
+            "All-years commit contributions",
+            number(contributions.commitContributionsAllYears),
+            years.map(year =>
+              addItem(
+                String(year.year),
+                `${number(year.commits)} commits`
+              )
+            ),
+            true
           )
         );
 
         panel.appendChild(
           addItem(
-            "GitHub contribution-graph commits (all calendar years)",
-            number(c.commitContributionsAllYears)
+            "Commits on default branches (all repositories)",
+            number(contributions.repositoryCommitsAllRepos)
           )
         );
+
+        const commitRows =
+          contributions.repositoryCommitsPublicDetails || [];
 
         panel.appendChild(
-          addItem(
-            "GitHub contribution-graph commits (last 365 days)",
-            number(c.commitContributionsLast365Days)
-          )
-        );
-
-        const publicCommitDetails =
-          Array.isArray(statistics.repositoryCommits?.repositories)
-            ? statistics.repositoryCommits.repositories
-                .filter(repo => !repo.isPrivate)
-                .map(repo => ({
-                  name: repo.name,
-                  commits: repo.total
-                }))
-            : [];
-
-        const publicReposByName = new Map(
-          (r.publicDetails || []).map(repo => [repo.name, repo])
-        );
-
-        for (const repo of publicCommitDetails) {
-          const publicRepo = publicReposByName.get(repo.name);
-
-          panel.appendChild(
-            addItem(
-              `${repo.name} (public)`,
-              `${number(repo.commits)} commits`,
-              publicRepo ? publicRepo.url : undefined
+          addGroup(
+            "Commits in public repositories",
+            number(
+              commitRows.reduce(
+                (sum, repo) => sum + Number(repo.commits || 0),
+                0
+              )
+            ),
+            commitRows.map(repo =>
+              addItem(repo.name, `${number(repo.commits)} commits`)
             )
-          );
-        }
+          )
+        );
       }
 
       if (type === "languages") {
         heading.textContent = "🧠 Language breakdown";
 
         description.textContent =
-          "Combined language usage across accessible public and " +
-          "private repositories. Private repository identities " +
-          "are not displayed.";
+          "Combined language usage across accessible public and private repositories. Private repository identities are not displayed.";
 
         addLanguageBreakdown(
           statistics.allAccessibleLanguages || [],
@@ -1097,15 +1194,15 @@
           "Issues authored by you according to GitHub Search.";
 
         panel.appendChild(
-          addItem("All authored issues", number(a.issuesAuthored))
+          addItem("All authored issues", number(activity.issuesAuthored))
         );
 
         panel.appendChild(
-          addItem("Open issues", number(a.openIssuesAuthored))
+          addItem("Open issues", number(activity.openIssuesAuthored))
         );
 
         panel.appendChild(
-          addItem("Closed issues", number(a.closedIssues))
+          addItem("Closed issues", number(activity.closedIssues))
         );
       }
 
@@ -1118,22 +1215,22 @@
         panel.appendChild(
           addItem(
             "All authored pull requests",
-            number(a.pullRequestsAuthored)
+            number(activity.pullRequestsAuthored)
           )
         );
 
         panel.appendChild(
-          addItem("Open", number(a.openPullRequests))
+          addItem("Open", number(activity.openPullRequests))
         );
 
         panel.appendChild(
-          addItem("Merged", number(a.mergedPullRequests))
+          addItem("Merged", number(activity.mergedPullRequests))
         );
 
         panel.appendChild(
           addItem(
             "Closed without merging",
-            number(a.closedUnmergedPullRequests)
+            number(activity.closedUnmergedPullRequests)
           )
         );
       }
@@ -1142,64 +1239,56 @@
         heading.textContent = "⭐ Repository stars";
 
         description.textContent =
-          "Stars received by your accessible repositories, " +
-          "with a public-repository breakdown.";
+          "Click Stars on public repositories to see the per-repository breakdown.";
 
         panel.appendChild(
           addItem(
             "Stars across accessible repositories",
-            number(r.starsReceivedOnAllAccessibleRepos)
+            number(repositories.starsReceivedOnAllAccessibleRepos)
           )
         );
 
         panel.appendChild(
-          addItem(
+          addGroup(
             "Stars on public repositories",
-            number(r.starsReceivedOnPublicRepos)
+            number(repositories.starsReceivedOnPublicRepos),
+            publicDetails.map(repo =>
+              addItem(
+                repo.name,
+                `${number(repo.stars)} stars`,
+                repo.url
+              )
+            )
           )
         );
-
-        for (const repo of r.publicDetails || []) {
-          panel.appendChild(
-            addItem(
-              repo.name,
-              `${number(repo.stars)} stars`,
-              repo.url
-            )
-          );
-        }
       }
 
       if (type === "forks") {
         heading.textContent = "🍴 Repository forks";
 
         description.textContent =
-          "Fork counts for your accessible repositories, " +
-          "with a public-repository breakdown.";
+          "Click Forks of public repositories to see the per-repository breakdown.";
 
         panel.appendChild(
           addItem(
             "Forks across accessible repositories",
-            number(r.forksOfAllAccessibleRepos)
+            number(repositories.forksOfAllAccessibleRepos)
           )
         );
 
         panel.appendChild(
-          addItem(
+          addGroup(
             "Forks of public repositories",
-            number(r.forksOfPublicRepos)
+            number(repositories.forksOfPublicRepos),
+            publicDetails.map(repo =>
+              addItem(
+                repo.name,
+                `${number(repo.forks)} forks`,
+                repo.url
+              )
+            )
           )
         );
-
-        for (const repo of r.publicDetails || []) {
-          panel.appendChild(
-            addItem(
-              repo.name,
-              `${number(repo.forks)} forks`,
-              repo.url
-            )
-          );
-        }
       }
     }
 
@@ -1223,18 +1312,10 @@
           !data.repositories ||
           !data.contributions ||
           !data.activity ||
-          !Array.isArray(data.contributions.last365DaysCalendar) ||
-          !Array.isArray(data.contributions.yearly) ||
-          data.contributions.yearly.some(
-            year => !Array.isArray(year.days)
-          ) ||
-          !data.repositoryCommits ||
-          data.repositoryCommits.total === undefined ||
           !Array.isArray(data.allAccessibleLanguages)
         ) {
           throw new Error(
-            "stats.json has an older format. Commit the updated " +
-            "generate-stats.js and rerun the GitHub Actions workflow."
+            "stats.json is missing required fields. Run the updated statistics workflow."
           );
         }
 
@@ -1257,13 +1338,13 @@
         }
 
         $("contribution-count").textContent =
-          number(data.contributions.last365Days);
+          number(data.contributions.allTime);
 
         $("repo-count").textContent =
           number(data.repositories.total);
 
         $("commit-count").textContent =
-          number(data.repositoryCommits.total);
+          number(data.contributions.commitContributionsAllYears);
 
         $("language-count").textContent =
           number(data.allAccessibleLanguages.length);
@@ -1298,8 +1379,7 @@
           "Unable to load statistics";
 
         $("detail-description").textContent =
-          "Check that stats.json exists and the latest statistics " +
-          "workflow succeeded.";
+          "Check that stats.json exists and that the latest statistics workflow completed successfully.";
 
         $("detail-content").replaceChildren();
 
@@ -1311,6 +1391,7 @@
       }
     }
 
+    // Register the click events after the cards exist in the page.
     document.querySelectorAll(".stat-card").forEach(card => {
       card.addEventListener("click", () => {
         showDetail(card.dataset.detail);

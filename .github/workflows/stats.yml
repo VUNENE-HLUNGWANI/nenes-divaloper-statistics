@@ -1,3 +1,4 @@
+
 name: Nene's Divaloper Statistics
 
 on:
@@ -60,19 +61,22 @@ jobs:
           console.log("Accessible languages:", data.allAccessibleLanguages.length);
           '
 
-      - name: Commit and push updated statistics
+      - name: Generate custom SVG stats card
+        run: node scripts/generate-card.js
+
+      - name: Commit and push updated statistics and card
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add stats.json
+          git add stats.json assets/github-stats.svg
 
           if git diff --cached --quiet; then
-            echo "No statistics changes to commit."
+            echo "No statistics or card changes to commit."
             exit 0
           fi
 
-          git commit -m "Update GitHub statistics"
+          git commit -m "Update GitHub statistics and custom card"
 
           git pull --rebase origin main
           git push origin HEAD:main

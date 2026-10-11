@@ -397,7 +397,10 @@
 
     .contribution-graph {
       display: grid;
-      grid-template-columns: repeat(var(--weeks, 53), minmax(0, 1fr));
+
+      /* Keep the same number of columns for every year. */
+      grid-template-columns: repeat(53, minmax(0, 1fr));
+
       grid-template-rows: repeat(7, auto);
       grid-auto-flow: column;
       gap: 3px;
@@ -863,10 +866,11 @@
       graph.className = "contribution-graph";
 
       const firstWeekday = Number(days[0].weekday || 0);
-      graph.style.setProperty(
-        "--weeks",
-        String(Math.ceil((firstWeekday + days.length) / 7))
-      );
+
+      // FIX: Every year uses the same 53 columns.
+      // This keeps the contribution squares the same size
+      // for 2025, 2026, and every other year.
+      graph.style.setProperty("--weeks", "53");
 
       graph.setAttribute("role", "group");
       graph.setAttribute(

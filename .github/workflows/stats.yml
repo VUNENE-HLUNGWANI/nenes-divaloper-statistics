@@ -1,4 +1,4 @@
-
+```yaml
 name: Nene's Divaloper Statistics
 
 on:
@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Prevent overlapping runs from racing to push to main.
+concurrency:
+  group: update-github-statistics
+  cancel-in-progress: false
+
 jobs:
   update-statistics:
     runs-on: ubuntu-latest
@@ -16,6 +21,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -27,10 +34,47 @@ jobs:
         env:
           GH_STATS_TOKEN: ${{ secrets.GH_STATS_TOKEN }}
 
-      - name: Save updated statistics
+      - name: Validate generated statistics
+        run: |
+          node -e '
+          const fs = require("fs");
+          const data = JSON.parse(fs.readFileSync("stats.json", "utf8"));
+
+          const required = [
+            "profile",
+            "repositories",
+            "contributions",
+            "activity",
+            "publicLanguages",
+            "allAccessibleLanguages"
+          ];
+
+          const missing = required.filter(key => !(key in data));
+
+          if (missing.length) {
+            console.error("Missing statistics sections:", missing.join(", "));
+            process.exit(1);
+          }
+
+          console.log("All required statistics sections are present.");
+          console.log("Contribution years:", data.contributions.yearly?.length ?? 0);
+          console.log("Accessible languages:", data.allAccessibleLanguages.length);
+          '
+
+      - name: Commit and push updated statistics
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --cached --quiet || git commit -m "Update GitHub statistics"
-          git push
+
+          git add stats.json
+
+          if git diff --cached --quiet; then
+            echo "No statistics changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update GitHub statistics"
+
+          git pull --rebase origin main
+          git push origin HEAD:main
+```

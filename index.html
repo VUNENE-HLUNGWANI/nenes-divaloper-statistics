@@ -1,0 +1,1091 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#120b18">
+  <meta name="description" content="Nene's Divaloper GitHub Statistics — all-time contributions, repositories, languages, and development activity.">
+  <title>Nene's Divaloper GitHub Statistics</title>
+
+  <style>
+    :root {
+      --bg: #120b18;
+      --panel: #201329;
+      --panel-light: #2b1936;
+      --pink: #ff1493;
+      --pink-light: #ff72bd;
+      --text: #fff5fc;
+      --muted: #bba8c5;
+      --border: #42294e;
+      --green: #82edb0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 10% 0%, #48204d 0, transparent 36%),
+        radial-gradient(ellipse at 95% 20%, #35122e 0, transparent 30%),
+        var(--bg);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    a {
+      color: var(--pink-light);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--pink-light);
+      outline-offset: 4px;
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 26px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      overflow-wrap: anywhere;
+    }
+
+    .brand span,
+    footer span {
+      color: var(--pink-light);
+    }
+
+    .github-link {
+      display: inline-block;
+      text-decoration: none;
+      border: 1px solid var(--pink);
+      border-radius: 999px;
+      padding: 9px 18px;
+      color: var(--text);
+      background: #201329;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+
+    .github-link:hover {
+      border-color: var(--pink-light);
+      background: var(--pink);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    main {
+      padding: 40px 0 60px;
+    }
+
+    /* PROFILE CARD
+       Row 1: avatar + name and username.
+       Row 2: profile link centred underneath the entire row. */
+
+    .profile-section {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 42px;
+    }
+
+    .profile {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      width: min(100%, 760px);
+      min-width: 0;
+      padding: 24px 30px;
+      background: #201329bb;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+
+    .profile-top {
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 24px;
+      min-width: 0;
+    }
+
+    .avatar {
+      display: block;
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      border: 3px solid var(--pink);
+      object-fit: cover;
+      background: var(--panel-light);
+      justify-self: center;
+      align-self: center;
+    }
+
+    .profile-info {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      text-align: left;
+      gap: 2px;
+    }
+
+    .profile-name {
+      margin: 0;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    #profile-login {
+      overflow-wrap: anywhere;
+    }
+
+    .profile-button {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin: 18px auto 0;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    /* DASHBOARD INTRODUCTION */
+
+    .hero {
+      margin-bottom: 35px;
+    }
+
+    .eyebrow {
+      color: var(--pink-light);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 5vw, 3.7rem);
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin: 10px 0 14px;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .intro {
+      max-width: 680px;
+      color: var(--muted);
+      margin: 0 0 16px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* STATISTICS */
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 32px 0 16px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 15px;
+    }
+
+    .stat-card {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      text-align: left;
+      color: var(--text);
+      cursor: pointer;
+      padding: 21px;
+      border-radius: 17px;
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, #291834, #1b1023);
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
+    }
+
+    .stat-card:hover,
+    .stat-card.active {
+      border-color: var(--pink);
+      background: linear-gradient(145deg, #3a1c40, #21112b);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      font-size: 1.35rem;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.25;
+      font-weight: 850;
+      margin: 12px 0 5px;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-label {
+      display: block;
+      font-weight: 700;
+    }
+
+    .stat-hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* Centre the final card when alone on a desktop row. */
+
+    .stat-card:last-child:nth-child(3n + 1) {
+      grid-column: 2;
+    }
+
+    /* SELECTED STATISTIC DETAILS */
+
+    .detail-panel {
+      margin-top: 22px;
+      padding: 24px;
+      background: #1b1023ef;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      scroll-margin-top: 20px;
+    }
+
+    .detail-panel h2 {
+      color: var(--pink-light);
+      margin-bottom: 6px;
+    }
+
+    .detail-description {
+      color: var(--muted);
+      margin: 0 0 18px;
+      font-size: 0.9rem;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #24152e;
+    }
+
+    .detail-item strong {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-item a {
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-item a:hover {
+      text-decoration: underline;
+    }
+
+    .detail-value {
+      color: var(--pink-light);
+      font-weight: 800;
+      text-align: right;
+      overflow-wrap: anywhere;
+      flex-shrink: 0;
+    }
+
+    /* LANGUAGE BREAKDOWN */
+
+    .language-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .language-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .language-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: #3a2942;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--pink), var(--pink-light));
+    }
+
+    /* PRIVACY NOTICE */
+
+    .notice {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 22px;
+      border-left: 3px solid var(--pink);
+      padding-left: 13px;
+    }
+
+    .error {
+      color: #ffb5c9;
+    }
+
+    /* Single divider above the footer. */
+
+    .footer-divider {
+      display: block;
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+      border: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    footer {
+      padding: 23px 0 35px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    /* RESPONSIVE LAYOUT */
+
+    @media (max-width: 760px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat-card:last-child:nth-child(3n + 1) {
+        grid-column: auto;
+      }
+
+      .stat-card:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: min(100%, calc((100% - 15px) / 2));
+      }
+
+      .profile-section {
+        margin-bottom: 34px;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .container {
+        width: min(100% - 24px, 1120px);
+      }
+
+      header {
+        padding: 20px 0;
+      }
+
+      main {
+        padding-top: 28px;
+      }
+
+      .profile {
+        padding: 20px 14px;
+      }
+
+      .profile-top {
+        grid-template-columns: 70px minmax(0, 1fr);
+        column-gap: 12px;
+      }
+
+      .avatar {
+        width: 70px;
+        height: 70px;
+      }
+
+      .profile-name {
+        font-size: 1rem;
+      }
+
+      #profile-login {
+        font-size: 0.8rem;
+      }
+
+      .profile-button {
+        margin-top: 16px;
+        font-size: 0.8rem;
+        padding: 8px 13px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-card:last-child:nth-child(odd),
+      .stat-card:last-child:nth-child(3n + 1) {
+        grid-column: auto;
+        width: 100%;
+        justify-self: stretch;
+      }
+
+      .stat-card {
+        padding: 17px;
+      }
+
+      .detail-panel {
+        padding: 17px;
+      }
+
+      .detail-item {
+        padding: 11px;
+        gap: 10px;
+      }
+
+      h1 {
+        letter-spacing: -1px;
+      }
+
+      .footer-divider {
+        width: calc(100% - 24px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        NENE'S <span>DIVALOPER</span> GITHUB STATISTICS
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- PROFILE: avatar and text in row one; link centred below -->
+    <section class="profile-section" aria-label="GitHub profile">
+      <div class="profile">
+
+        <div class="profile-top">
+          <img
+            id="avatar"
+            class="avatar"
+            src="https://github.com/VUNENE-HLUNGWANI.png"
+            alt="Vunene Hlungwani's GitHub avatar"
+            width="94"
+            height="94"
+          >
+
+          <div class="profile-info">
+            <div id="profile-name" class="profile-name">
+              Vunene Hlungwani
+            </div>
+
+            <div id="profile-login" class="muted">
+              @VUNENE-HLUNGWANI
+            </div>
+          </div>
+        </div>
+
+        <a
+          id="profile-link"
+          class="github-link profile-button"
+          href="https://github.com/VUNENE-HLUNGWANI"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View GitHub Profile ↗
+        </a>
+
+      </div>
+    </section>
+
+    <!-- DASHBOARD INTRODUCTION -->
+    <section class="hero" aria-labelledby="dashboard-heading">
+      <div class="eyebrow">MY PROGRESS. MY JOURNEY.</div>
+
+      <h1 id="dashboard-heading">MY GITHUB DASHBOARD.</h1>
+
+      <p class="intro">
+        A visual summary of my all-time GitHub contributions, projects,
+        and development activity. Every contribution is another step forward.
+      </p>
+
+      <div class="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="update-status">Loading statistics...</span>
+      </div>
+    </section>
+
+    <!-- STATISTICS OVERVIEW -->
+    <section aria-labelledby="overview-heading">
+      <div class="section-heading">
+        <h2 id="overview-heading">MY DEVELOPER JOURNEY STATISTICS</h2>
+        <span class="section-note">Select a card to explore its details</span>
+      </div>
+
+      <div class="stats-grid" id="stats-grid">
+
+        <button class="stat-card" type="button" data-detail="contributions" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">📈</span>
+          <span class="stat-value" id="contribution-count">—</span>
+          <span class="stat-label">All-time contributions</span>
+          <span class="stat-hint">Contribution history across all years</span>
+        </button>
+
+        <button class="stat-card" type="button" data-detail="repositories" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">📁</span>
+          <span class="stat-value" id="repo-count">—</span>
+          <span class="stat-label">Repositories</span>
+          <span class="stat-hint">Public and private totals</span>
+        </button>
+
+        <button class="stat-card" type="button" data-detail="stars" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">⭐</span>
+          <span class="stat-value" id="star-count">—</span>
+          <span class="stat-label">Public repository stars</span>
+          <span class="stat-hint">Stars across public projects</span>
+        </button>
+
+        <button class="stat-card" type="button" data-detail="followers" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">👥</span>
+          <span class="stat-value" id="follower-count">—</span>
+          <span class="stat-label">Followers</span>
+          <span class="stat-hint">People following my profile</span>
+        </button>
+
+        <button class="stat-card" type="button" data-detail="issues" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🧩</span>
+          <span class="stat-value" id="issue-count">—</span>
+          <span class="stat-label">Issues authored</span>
+          <span class="stat-hint">Reported and tracked</span>
+        </button>
+
+        <button class="stat-card" type="button" data-detail="pulls" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🔀</span>
+          <span class="stat-value" id="pr-count">—</span>
+          <span class="stat-label">Pull requests</span>
+          <span class="stat-hint">Including merged requests</span>
+        </button>
+
+        <button class="stat-card" type="button" data-detail="languages" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">💻</span>
+          <span class="stat-value" id="language-count">—</span>
+          <span class="stat-label">Languages</span>
+          <span class="stat-hint">Combined public and private data</span>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- SELECTED STATISTIC DETAILS -->
+    <section
+      class="detail-panel"
+      id="detail-panel"
+      aria-live="polite"
+      aria-atomic="false"
+      aria-labelledby="detail-title"
+    >
+      <h2 id="detail-title">Your statistics</h2>
+
+      <p class="detail-description" id="detail-description">
+        Your details will appear here when the data loads.
+      </p>
+
+      <div class="detail-list" id="detail-content">
+        <p class="muted">Loading data from stats.json...</p>
+      </div>
+    </section>
+
+    <!-- PRIVACY NOTICE -->
+    <p class="notice">
+      This dashboard displays all-time contribution history, not just
+      repository statistics from the last year. Repository totals and
+      language data combine accessible public and private repositories.
+      Private repository names and links are never displayed. Stars are
+      counted from public repositories.
+    </p>
+
+  </main>
+
+  <!-- ONE DIVIDER ABOVE THE FOOTER -->
+  <hr class="footer-divider">
+
+  <footer>
+    <div class="container">
+      CODE WITH LOVE BY VUNENE <span>· 2026</span>
+    </div>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let statistics = null;
+
+    function number(value) {
+      if (value === null || value === undefined || value === "") {
+        return "Unavailable";
+      }
+
+      const parsed = Number(value);
+
+      return Number.isFinite(parsed)
+        ? parsed.toLocaleString()
+        : "Unavailable";
+    }
+
+    function addItem(label, value, url) {
+      const row = document.createElement("div");
+      row.className = "detail-item";
+
+      const name = document.createElement("strong");
+
+      if (url) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = label;
+        name.appendChild(link);
+      } else {
+        name.textContent = label;
+      }
+
+      const amount = document.createElement("span");
+      amount.className = "detail-value";
+      amount.textContent = String(value);
+
+      row.append(name, amount);
+      return row;
+    }
+
+    function showDetail(type) {
+      if (!statistics) return;
+
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        const active = card.dataset.detail === type;
+        card.classList.toggle("active", active);
+        card.setAttribute("aria-pressed", String(active));
+      });
+
+      const panel = $("detail-content");
+      panel.replaceChildren();
+
+      const heading = $("detail-title");
+      const description = $("detail-description");
+
+      const contributions = statistics.contributions || {};
+      const repositories = statistics.repositories || {};
+      const profile = statistics.profile || {};
+      const activity = statistics.activity || {};
+
+      if (type === "contributions") {
+        heading.textContent = "📈 All-time contributions";
+
+        const allTime = contributions.allTime;
+
+        if (allTime == null) {
+          description.textContent =
+            "The all-time contribution total is missing from stats.json. Check the data generated by your statistics workflow.";
+
+          panel.appendChild(addItem("All-time contributions", "Unavailable"));
+        } else {
+          description.textContent =
+            "Your all-time contribution total across the available GitHub contribution history, rather than a one-year repository summary.";
+
+          panel.appendChild(
+            addItem("All-time contributions", number(allTime))
+          );
+
+          if (contributions.firstYear) {
+            panel.appendChild(
+              addItem("History starts", contributions.firstYear)
+            );
+          }
+
+          if (contributions.lastYear) {
+            panel.appendChild(
+              addItem("Latest year included", contributions.lastYear)
+            );
+          }
+        }
+      }
+
+      if (type === "repositories") {
+        heading.textContent = "📁 Repository breakdown";
+
+        description.textContent =
+          "Public repository details are listed below. Private repositories are counted without exposing their names or links.";
+
+        panel.appendChild(
+          addItem("Public repositories", number(repositories.public))
+        );
+
+        panel.appendChild(
+          addItem("Private repositories", number(repositories.private))
+        );
+
+        panel.appendChild(
+          addItem("Total repositories", number(repositories.total))
+        );
+
+        const publicDetails = repositories.publicDetails || [];
+
+        for (const repo of publicDetails) {
+          panel.appendChild(
+            addItem(
+              repo.name,
+              `${number(repo.stars)} stars · ${repo.language || "Other"}`,
+              repo.url
+            )
+          );
+        }
+
+        if (!publicDetails.length) {
+          panel.appendChild(
+            addItem("Public repository details", "No data available")
+          );
+        }
+      }
+
+      if (type === "stars") {
+        heading.textContent = "⭐ Public repository stars";
+
+        description.textContent =
+          "Stars received across your public repositories, with each public repository listed separately.";
+
+        const publicDetails = repositories.publicDetails || [];
+
+        for (const repo of publicDetails) {
+          panel.appendChild(
+            addItem(repo.name, `${number(repo.stars)} stars`, repo.url)
+          );
+        }
+
+        if (!publicDetails.length) {
+          panel.appendChild(
+            addItem(
+              "Total public stars",
+              number(repositories.starsReceivedOnPublicRepos)
+            )
+          );
+        }
+      }
+
+      if (type === "followers") {
+        heading.textContent = "👥 Profile community";
+
+        description.textContent =
+          "Your current public GitHub profile totals.";
+
+        panel.appendChild(addItem("Followers", number(profile.followers)));
+        panel.appendChild(addItem("Following", number(profile.following)));
+
+        panel.appendChild(
+          addItem(
+            "GitHub username",
+            `@${profile.username || "VUNENE-HLUNGWANI"}`,
+            profile.profileUrl || "https://github.com/VUNENE-HLUNGWANI"
+          )
+        );
+      }
+
+      if (type === "issues") {
+        heading.textContent = "🧩 Issues";
+
+        description.textContent =
+          "Issue totals returned by GitHub for your account.";
+
+        panel.appendChild(
+          addItem("Issues authored", number(activity.issuesAuthored))
+        );
+
+        panel.appendChild(
+          addItem(
+            "Open issues authored",
+            number(activity.openIssuesAuthored)
+          )
+        );
+      }
+
+      if (type === "pulls") {
+        heading.textContent = "🔀 Pull requests";
+
+        description.textContent =
+          "Pull request totals returned by GitHub for your account.";
+
+        panel.appendChild(
+          addItem(
+            "Pull requests authored",
+            number(activity.pullRequestsAuthored)
+          )
+        );
+
+        panel.appendChild(
+          addItem(
+            "Merged pull requests",
+            number(activity.mergedPullRequests)
+          )
+        );
+      }
+
+      if (type === "languages") {
+        heading.textContent = "💻 Language breakdown";
+
+        description.textContent =
+          "Combined language byte counts from accessible public and private repositories. Private repository names and links are not displayed.";
+
+        const languages = statistics.languages || [];
+
+        const total = languages.reduce(
+          (sum, item) => sum + Number(item.bytes || 0),
+          0
+        );
+
+        if (!languages.length) {
+          panel.appendChild(
+            addItem("Languages", "No language data available")
+          );
+          return;
+        }
+
+        const list = document.createElement("div");
+        list.className = "language-list";
+
+        for (const language of languages) {
+          const bytes = Number(language.bytes || 0);
+          const percent = total ? (bytes / total) * 100 : 0;
+
+          const row = document.createElement("div");
+          row.className = "language-row";
+
+          const label = document.createElement("div");
+          label.className = "language-label";
+
+          const languageName = document.createElement("strong");
+          languageName.textContent = language.name;
+
+          const percentage = document.createElement("span");
+          percentage.textContent = `${percent.toFixed(1)}%`;
+
+          label.append(languageName, percentage);
+
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.setAttribute("role", "progressbar");
+          bar.setAttribute("aria-label", `${language.name} percentage`);
+          bar.setAttribute("aria-valuemin", "0");
+          bar.setAttribute("aria-valuemax", "100");
+          bar.setAttribute("aria-valuenow", percent.toFixed(1));
+
+          const fill = document.createElement("div");
+          fill.className = "bar-fill";
+          fill.style.width = `${percent}%`;
+
+          bar.appendChild(fill);
+          row.append(label, bar);
+          list.appendChild(row);
+        }
+
+        panel.appendChild(list);
+      }
+    }
+
+    async function loadStatistics() {
+      try {
+        const response = await fetch(`stats.json?v=${Date.now()}`, {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Could not load stats.json (HTTP ${response.status}).`
+          );
+        }
+
+        const data = await response.json();
+
+        if (
+          !data.profile ||
+          !data.repositories ||
+          !data.activity ||
+          !Array.isArray(data.languages)
+        ) {
+          throw new Error(
+            "stats.json is missing required fields. Check your statistics workflow."
+          );
+        }
+
+        statistics = data;
+
+        const profile = statistics.profile;
+        const repositories = statistics.repositories;
+        const activity = statistics.activity;
+
+        $("profile-name").textContent =
+          profile.name || profile.username || "Vunene Hlungwani";
+
+        $("profile-login").textContent =
+          `@${profile.username || "VUNENE-HLUNGWANI"}`;
+
+        if (profile.avatarUrl) {
+          $("avatar").src = profile.avatarUrl;
+        }
+
+        if (profile.profileUrl) {
+          $("profile-link").href = profile.profileUrl;
+        }
+
+        $("repo-count").textContent = number(repositories.total);
+
+        $("star-count").textContent =
+          number(repositories.starsReceivedOnPublicRepos);
+
+        $("follower-count").textContent = number(profile.followers);
+        $("issue-count").textContent = number(activity.issuesAuthored);
+        $("pr-count").textContent = number(activity.pullRequestsAuthored);
+
+        $("language-count").textContent =
+          number(statistics.languages.length);
+
+        const allTime = statistics.contributions?.allTime;
+
+        $("contribution-count").textContent =
+          allTime == null ? "—" : number(allTime);
+
+        const generatedAt = new Date(statistics.generatedAt);
+
+        $("update-status").textContent =
+          Number.isNaN(generatedAt.getTime())
+            ? "Statistics loaded"
+            : `Statistics loaded · ${generatedAt.toLocaleString()}`;
+
+        showDetail("contributions");
+      } catch (error) {
+        $("update-status").textContent =
+          "Statistics could not be loaded";
+
+        $("update-status").classList.add("error");
+
+        $("detail-title").textContent = "Unable to load statistics";
+
+        $("detail-description").textContent =
+          "Check that stats.json exists and that your statistics workflow has run successfully.";
+
+        $("detail-content").replaceChildren();
+
+        const message = document.createElement("p");
+        message.className = "error";
+        message.textContent = error.message;
+
+        $("detail-content").appendChild(message);
+      }
+    }
+
+    document.querySelectorAll(".stat-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        showDetail(card.dataset.detail);
+      });
+    });
+
+    loadStatistics();
+  </script>
+</body>
+</html>

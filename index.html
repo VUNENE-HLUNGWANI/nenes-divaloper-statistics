@@ -1,11 +1,11 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#120b18">
-  <meta name="description" content="Nene's Divaloper GitHub Statistics — all-time contributions, repositories, languages, and development activity.">
+  <meta name="description" content="Nene's Divaloper GitHub Statistics — contributions, repositories, commits, languages and development activity.">
   <title>Nene's Divaloper GitHub Statistics</title>
 
   <style>
@@ -41,8 +41,7 @@
       line-height: 1.6;
     }
 
-    button,
-    a {
+    button, a {
       font: inherit;
     }
 
@@ -84,33 +83,9 @@
       color: var(--pink-light);
     }
 
-    .github-link {
-      display: inline-block;
-      text-decoration: none;
-      border: 1px solid var(--pink);
-      border-radius: 999px;
-      padding: 9px 18px;
-      color: var(--text);
-      background: #201329;
-      font-size: 0.85rem;
-      font-weight: 700;
-      transition: border-color 0.2s, background 0.2s, transform 0.2s;
-    }
-
-    .github-link:hover {
-      border-color: var(--pink-light);
-      background: var(--pink);
-      color: white;
-      transform: translateY(-1px);
-    }
-
     main {
       padding: 40px 0 60px;
     }
-
-    /* PROFILE CARD
-       Row 1: avatar + name and username.
-       Row 2: profile link centred underneath the entire row. */
 
     .profile-section {
       display: flex;
@@ -121,8 +96,6 @@
     .profile {
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      gap: 0;
       width: min(100%, 760px);
       min-width: 0;
       padding: 24px 30px;
@@ -148,7 +121,6 @@
       object-fit: cover;
       background: var(--panel-light);
       justify-self: center;
-      align-self: center;
     }
 
     .profile-info {
@@ -157,7 +129,6 @@
       flex-direction: column;
       justify-content: center;
       align-items: flex-start;
-      text-align: left;
       gap: 2px;
     }
 
@@ -179,6 +150,26 @@
       overflow-wrap: anywhere;
     }
 
+    .github-link {
+      display: inline-block;
+      text-decoration: none;
+      border: 1px solid var(--pink);
+      border-radius: 999px;
+      padding: 9px 18px;
+      color: var(--text);
+      background: #201329;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+
+    .github-link:hover {
+      border-color: var(--pink-light);
+      background: var(--pink);
+      color: white;
+      transform: translateY(-1px);
+    }
+
     .profile-button {
       display: block;
       width: fit-content;
@@ -187,8 +178,6 @@
       text-align: center;
       overflow-wrap: anywhere;
     }
-
-    /* DASHBOARD INTRODUCTION */
 
     .hero {
       margin-bottom: 35px;
@@ -233,8 +222,6 @@
       border-radius: 50%;
       background: var(--green);
     }
-
-    /* STATISTICS */
 
     .section-heading {
       display: flex;
@@ -307,14 +294,6 @@
       color: var(--muted);
     }
 
-    /* Centre the final card when alone on a desktop row. */
-
-    .stat-card:last-child:nth-child(3n + 1) {
-      grid-column: 2;
-    }
-
-    /* SELECTED STATISTIC DETAILS */
-
     .detail-panel {
       margin-top: 22px;
       padding: 24px;
@@ -373,8 +352,6 @@
       flex-shrink: 0;
     }
 
-    /* LANGUAGE BREAKDOWN */
-
     .language-list {
       display: grid;
       gap: 14px;
@@ -392,6 +369,15 @@
       font-size: 0.9rem;
     }
 
+    .language-label strong {
+      overflow-wrap: anywhere;
+    }
+
+    .language-label span {
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
     .bar {
       height: 9px;
       border-radius: 999px;
@@ -405,7 +391,40 @@
       background: linear-gradient(90deg, var(--pink), var(--pink-light));
     }
 
-    /* PRIVACY NOTICE */
+    .graph-scroll {
+      overflow-x: auto;
+      padding: 8px 0 14px;
+    }
+
+    .contribution-graph {
+      display: grid;
+      grid-template-rows: repeat(7, 12px);
+      grid-auto-flow: column;
+      grid-auto-columns: 12px;
+      gap: 4px;
+      width: max-content;
+    }
+
+    .contribution-day {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: #3a2942;
+    }
+
+    .graph-legend {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 8px;
+    }
+
+    .graph-legend .contribution-day {
+      display: inline-block;
+    }
 
     .notice {
       color: var(--muted);
@@ -418,8 +437,6 @@
     .error {
       color: #ffb5c9;
     }
-
-    /* Single divider above the footer. */
 
     .footer-divider {
       display: block;
@@ -438,25 +455,9 @@
       font-weight: 700;
     }
 
-    /* RESPONSIVE LAYOUT */
-
     @media (max-width: 760px) {
       .stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .stat-card:last-child:nth-child(3n + 1) {
-        grid-column: auto;
-      }
-
-      .stat-card:last-child:nth-child(odd) {
-        grid-column: 1 / -1;
-        justify-self: center;
-        width: min(100%, calc((100% - 15px) / 2));
-      }
-
-      .profile-section {
-        margin-bottom: 34px;
       }
     }
 
@@ -505,13 +506,6 @@
         grid-template-columns: 1fr;
       }
 
-      .stat-card:last-child:nth-child(odd),
-      .stat-card:last-child:nth-child(3n + 1) {
-        grid-column: auto;
-        width: 100%;
-        justify-self: stretch;
-      }
-
       .stat-card {
         padding: 17px;
       }
@@ -558,17 +552,14 @@
   </header>
 
   <main class="container">
-
-    <!-- PROFILE: avatar and text in row one; link centred below -->
     <section class="profile-section" aria-label="GitHub profile">
       <div class="profile">
-
         <div class="profile-top">
           <img
             id="avatar"
             class="avatar"
             src="https://github.com/VUNENE-HLUNGWANI.png"
-            alt="Vunene Hlungwani's GitHub avatar"
+            alt="GitHub profile avatar"
             width="94"
             height="94"
           >
@@ -577,7 +568,6 @@
             <div id="profile-name" class="profile-name">
               Vunene Hlungwani
             </div>
-
             <div id="profile-login" class="muted">
               @VUNENE-HLUNGWANI
             </div>
@@ -593,19 +583,17 @@
         >
           View GitHub Profile ↗
         </a>
-
       </div>
     </section>
 
-    <!-- DASHBOARD INTRODUCTION -->
     <section class="hero" aria-labelledby="dashboard-heading">
       <div class="eyebrow">MY PROGRESS. MY JOURNEY.</div>
-
       <h1 id="dashboard-heading">MY GITHUB DASHBOARD.</h1>
 
       <p class="intro">
-        A visual summary of my all-time GitHub contributions, projects,
-        and development activity. Every contribution is another step forward.
+        A visual summary of my GitHub contributions, projects, programming
+        languages and development activity. Every contribution is another
+        step forward.
       </p>
 
       <div class="status">
@@ -614,7 +602,6 @@
       </div>
     </section>
 
-    <!-- STATISTICS OVERVIEW -->
     <section aria-labelledby="overview-heading">
       <div class="section-heading">
         <h2 id="overview-heading">MY DEVELOPER JOURNEY STATISTICS</h2>
@@ -622,90 +609,88 @@
       </div>
 
       <div class="stats-grid" id="stats-grid">
-
         <button class="stat-card" type="button" data-detail="contributions" aria-pressed="false">
           <span class="stat-icon" aria-hidden="true">📈</span>
           <span class="stat-value" id="contribution-count">—</span>
-          <span class="stat-label">All-time contributions</span>
-          <span class="stat-hint">Contribution history across all years</span>
+          <span class="stat-label">Contributions</span>
+          <span class="stat-hint">All-years total</span>
         </button>
 
         <button class="stat-card" type="button" data-detail="repositories" aria-pressed="false">
           <span class="stat-icon" aria-hidden="true">📁</span>
           <span class="stat-value" id="repo-count">—</span>
           <span class="stat-label">Repositories</span>
-          <span class="stat-hint">Public and private totals</span>
+          <span class="stat-hint">Public + private</span>
         </button>
 
-        <button class="stat-card" type="button" data-detail="stars" aria-pressed="false">
-          <span class="stat-icon" aria-hidden="true">⭐</span>
-          <span class="stat-value" id="star-count">—</span>
-          <span class="stat-label">Public repository stars</span>
-          <span class="stat-hint">Stars across public projects</span>
+        <button class="stat-card" type="button" data-detail="commits" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">💻</span>
+          <span class="stat-value" id="commit-count">—</span>
+          <span class="stat-label">Commit contributions</span>
+          <span class="stat-hint">All-years total</span>
         </button>
 
-        <button class="stat-card" type="button" data-detail="followers" aria-pressed="false">
-          <span class="stat-icon" aria-hidden="true">👥</span>
-          <span class="stat-value" id="follower-count">—</span>
-          <span class="stat-label">Followers</span>
-          <span class="stat-hint">People following my profile</span>
+        <button class="stat-card" type="button" data-detail="languages" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🧠</span>
+          <span class="stat-value" id="language-count">—</span>
+          <span class="stat-label">Languages</span>
+          <span class="stat-hint">Public + private aggregate</span>
         </button>
 
         <button class="stat-card" type="button" data-detail="issues" aria-pressed="false">
           <span class="stat-icon" aria-hidden="true">🧩</span>
           <span class="stat-value" id="issue-count">—</span>
-          <span class="stat-label">Issues authored</span>
-          <span class="stat-hint">Reported and tracked</span>
+          <span class="stat-label">Issues</span>
+          <span class="stat-hint">All authored issues</span>
         </button>
 
         <button class="stat-card" type="button" data-detail="pulls" aria-pressed="false">
           <span class="stat-icon" aria-hidden="true">🔀</span>
           <span class="stat-value" id="pr-count">—</span>
           <span class="stat-label">Pull requests</span>
-          <span class="stat-hint">Including merged requests</span>
+          <span class="stat-hint">All authored PRs</span>
         </button>
 
-        <button class="stat-card" type="button" data-detail="languages" aria-pressed="false">
-          <span class="stat-icon" aria-hidden="true">💻</span>
-          <span class="stat-value" id="language-count">—</span>
-          <span class="stat-label">Languages</span>
-          <span class="stat-hint">Combined public and private data</span>
+        <button class="stat-card" type="button" data-detail="stars" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">⭐</span>
+          <span class="stat-value" id="star-count">—</span>
+          <span class="stat-label">Stars</span>
+          <span class="stat-hint">Repository stars</span>
         </button>
 
+        <button class="stat-card" type="button" data-detail="forks" aria-pressed="false">
+          <span class="stat-icon" aria-hidden="true">🍴</span>
+          <span class="stat-value" id="fork-count">—</span>
+          <span class="stat-label">Forks</span>
+          <span class="stat-hint">Forks of your repositories</span>
+        </button>
       </div>
     </section>
 
-    <!-- SELECTED STATISTIC DETAILS -->
     <section
       class="detail-panel"
       id="detail-panel"
       aria-live="polite"
-      aria-atomic="false"
       aria-labelledby="detail-title"
     >
-      <h2 id="detail-title">Your statistics</h2>
-
+      <h2 id="detail-title">Contribution history</h2>
       <p class="detail-description" id="detail-description">
-        Your details will appear here when the data loads.
+        Loading your statistics...
       </p>
-
       <div class="detail-list" id="detail-content">
         <p class="muted">Loading data from stats.json...</p>
       </div>
     </section>
 
-    <!-- PRIVACY NOTICE -->
     <p class="notice">
-      This dashboard displays all-time contribution history, not just
-      repository statistics from the last year. Repository totals and
-      language data combine accessible public and private repositories.
-      Private repository names and links are never displayed. Stars are
-      counted from public repositories.
+      Statistics include accessible public and private repository data where
+      GitHub makes it available. Only public repository names, descriptions
+      and links are displayed. Private repository identities are not shown.
+      Aggregate language statistics from private repositories are included
+      in the public dashboard.
     </p>
-
   </main>
 
-  <!-- ONE DIVIDER ABOVE THE FOOTER -->
   <hr class="footer-divider">
 
   <footer>
@@ -715,8 +700,7 @@
   </footer>
 
   <script>
-    const $ = (id) => document.getElementById(id);
-
+    const $ = id => document.getElementById(id);
     let statistics = null;
 
     function number(value) {
@@ -750,16 +734,144 @@
 
       const amount = document.createElement("span");
       amount.className = "detail-value";
-      amount.textContent = String(value);
+      amount.textContent = String(value ?? "Unavailable");
 
       row.append(name, amount);
       return row;
     }
 
+    function addDailyGraph(days, panel) {
+      const title = document.createElement("h3");
+      title.textContent = "Daily contributions";
+      panel.appendChild(title);
+
+      if (!Array.isArray(days) || days.length === 0) {
+        panel.appendChild(
+          addItem("Daily contribution data", "Unavailable")
+        );
+        return;
+      }
+
+      const graphScroll = document.createElement("div");
+      graphScroll.className = "graph-scroll";
+
+      const graph = document.createElement("div");
+      graph.className = "contribution-graph";
+      graph.setAttribute("role", "group");
+      graph.setAttribute("aria-label", "Daily contribution graph");
+
+      const maximum = Math.max(
+        1,
+        ...days.map(day => Number(day.count || 0))
+      );
+
+      for (const day of days) {
+        const count = Number(day.count || 0);
+        const cell = document.createElement("div");
+        cell.className = "contribution-day";
+        cell.title = `${day.date}: ${count} contributions`;
+        cell.setAttribute("role", "img");
+        cell.setAttribute("aria-label", cell.title);
+
+        if (count > 0) {
+          const intensity = count / maximum;
+
+          if (intensity < 0.25) {
+            cell.style.background = "#77315f";
+          } else if (intensity < 0.5) {
+            cell.style.background = "#b52b7a";
+          } else if (intensity < 0.75) {
+            cell.style.background = "#e83a9b";
+          } else {
+            cell.style.background = "#ff72bd";
+          }
+        }
+
+        graph.appendChild(cell);
+      }
+
+      graphScroll.appendChild(graph);
+      panel.appendChild(graphScroll);
+
+      const legend = document.createElement("div");
+      legend.className = "graph-legend";
+      legend.textContent = "Less ";
+
+      for (const color of ["#3a2942", "#77315f", "#b52b7a", "#e83a9b", "#ff72bd"]) {
+        const cell = document.createElement("span");
+        cell.className = "contribution-day";
+        cell.style.background = color;
+        cell.setAttribute("aria-hidden", "true");
+        legend.appendChild(cell);
+      }
+
+      const more = document.createElement("span");
+      more.textContent = " More";
+      legend.appendChild(more);
+      panel.appendChild(legend);
+    }
+
+    function addLanguageBreakdown(languages, panel) {
+      if (!languages.length) {
+        panel.appendChild(
+          addItem("Languages", "No language data available")
+        );
+        return;
+      }
+
+      const totalBytes = languages.reduce(
+        (sum, language) => sum + Number(language.bytes || 0),
+        0
+      );
+
+      const list = document.createElement("div");
+      list.className = "language-list";
+
+      for (const language of languages) {
+        const bytes = Number(language.bytes || 0);
+        const percentage = totalBytes > 0
+          ? bytes / totalBytes * 100
+          : 0;
+
+        const row = document.createElement("div");
+        row.className = "language-row";
+
+        const label = document.createElement("div");
+        label.className = "language-label";
+
+        const name = document.createElement("strong");
+        name.textContent = language.name;
+
+        const amount = document.createElement("span");
+        amount.textContent =
+          `${percentage.toFixed(1)}% · ${number(bytes)} bytes`;
+
+        label.append(name, amount);
+
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.setAttribute("role", "progressbar");
+        bar.setAttribute("aria-label", `${language.name} usage`);
+        bar.setAttribute("aria-valuemin", "0");
+        bar.setAttribute("aria-valuemax", "100");
+        bar.setAttribute("aria-valuenow", percentage.toFixed(1));
+
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${percentage}%`;
+
+        bar.appendChild(fill);
+        row.append(label, bar);
+        list.appendChild(row);
+      }
+
+      panel.appendChild(list);
+    }
+
     function showDetail(type) {
       if (!statistics) return;
 
-      document.querySelectorAll(".stat-card").forEach((card) => {
+      document.querySelectorAll(".stat-card").forEach(card => {
         const active = card.dataset.detail === type;
         card.classList.toggle("active", active);
         card.setAttribute("aria-pressed", String(active));
@@ -773,57 +885,48 @@
 
       const contributions = statistics.contributions || {};
       const repositories = statistics.repositories || {};
-      const profile = statistics.profile || {};
       const activity = statistics.activity || {};
 
       if (type === "contributions") {
-        heading.textContent = "📈 All-time contributions";
+        heading.textContent = "📈 Contribution history";
+        description.textContent =
+          "All-years contributions, yearly totals and the daily graph.";
 
-        const allTime = contributions.allTime;
+        panel.appendChild(
+          addItem("All-years contributions", number(contributions.allTime))
+        );
 
-        if (allTime == null) {
-          description.textContent =
-            "The all-time contribution total is missing from stats.json. Check the data generated by your statistics workflow.";
+        panel.appendChild(
+          addItem("Last 365 days", number(contributions.last365Days))
+        );
 
-          panel.appendChild(addItem("All-time contributions", "Unavailable"));
-        } else {
-          description.textContent =
-            "Your all-time contribution total across the available GitHub contribution history, rather than a one-year repository summary.";
+        const years = contributions.yearly || [];
 
+        for (const year of [...years].sort((a, b) => b.year - a.year)) {
           panel.appendChild(
-            addItem("All-time contributions", number(allTime))
+            addItem(String(year.year), `${number(year.total)} contributions`)
           );
-
-          if (contributions.firstYear) {
-            panel.appendChild(
-              addItem("History starts", contributions.firstYear)
-            );
-          }
-
-          if (contributions.lastYear) {
-            panel.appendChild(
-              addItem("Latest year included", contributions.lastYear)
-            );
-          }
         }
+
+        addDailyGraph(
+          contributions.last365DaysCalendar || [],
+          panel
+        );
       }
 
       if (type === "repositories") {
         heading.textContent = "📁 Repository breakdown";
-
         description.textContent =
-          "Public repository details are listed below. Private repositories are counted without exposing their names or links.";
-
-        panel.appendChild(
-          addItem("Public repositories", number(repositories.public))
-        );
-
-        panel.appendChild(
-          addItem("Private repositories", number(repositories.private))
-        );
+          "Public and private repository totals. Only public repository details are listed.";
 
         panel.appendChild(
           addItem("Total repositories", number(repositories.total))
+        );
+        panel.appendChild(
+          addItem("Public repositories", number(repositories.public))
+        );
+        panel.appendChild(
+          addItem("Private repositories", number(repositories.private))
         );
 
         const publicDetails = repositories.publicDetails || [];
@@ -832,7 +935,7 @@
           panel.appendChild(
             addItem(
               repo.name,
-              `${number(repo.stars)} stars · ${repo.language || "Other"}`,
+              `${number(repo.stars)} stars · ${number(repo.forks)} forks · ${repo.language || "Other"}`,
               repo.url
             )
           );
@@ -845,146 +948,133 @@
         }
       }
 
-      if (type === "stars") {
-        heading.textContent = "⭐ Public repository stars";
-
+      if (type === "commits") {
+        heading.textContent = "💻 Commit contributions";
         description.textContent =
-          "Stars received across your public repositories, with each public repository listed separately.";
+          "GitHub contribution-graph commit counts, not every commit across all branches.";
 
-        const publicDetails = repositories.publicDetails || [];
+        panel.appendChild(
+          addItem(
+            "All-years commit contributions",
+            number(contributions.commitContributionsAllYears)
+          )
+        );
 
-        for (const repo of publicDetails) {
+        panel.appendChild(
+          addItem(
+            "Last 365 days",
+            number(contributions.commitContributionsLast365Days)
+          )
+        );
+
+        for (const year of [...(contributions.yearly || [])]
+          .sort((a, b) => b.year - a.year)) {
           panel.appendChild(
-            addItem(repo.name, `${number(repo.stars)} stars`, repo.url)
-          );
-        }
-
-        if (!publicDetails.length) {
-          panel.appendChild(
-            addItem(
-              "Total public stars",
-              number(repositories.starsReceivedOnPublicRepos)
-            )
+            addItem(String(year.year), `${number(year.commits)} commits`)
           );
         }
       }
 
-      if (type === "followers") {
-        heading.textContent = "👥 Profile community";
-
+      if (type === "languages") {
+        heading.textContent = "🧠 Language breakdown";
         description.textContent =
-          "Your current public GitHub profile totals.";
+          "Combined language usage across accessible public and private repositories. Private repository identities are not displayed.";
 
-        panel.appendChild(addItem("Followers", number(profile.followers)));
-        panel.appendChild(addItem("Following", number(profile.following)));
-
-        panel.appendChild(
-          addItem(
-            "GitHub username",
-            `@${profile.username || "VUNENE-HLUNGWANI"}`,
-            profile.profileUrl || "https://github.com/VUNENE-HLUNGWANI"
-          )
+        addLanguageBreakdown(
+          statistics.allAccessibleLanguages || [],
+          panel
         );
       }
 
       if (type === "issues") {
         heading.textContent = "🧩 Issues";
-
         description.textContent =
-          "Issue totals returned by GitHub for your account.";
+          "Issues authored by you according to GitHub Search.";
 
         panel.appendChild(
-          addItem("Issues authored", number(activity.issuesAuthored))
+          addItem("All authored issues", number(activity.issuesAuthored))
         );
-
         panel.appendChild(
-          addItem(
-            "Open issues authored",
-            number(activity.openIssuesAuthored)
-          )
+          addItem("Open issues", number(activity.openIssuesAuthored))
+        );
+        panel.appendChild(
+          addItem("Closed issues", number(activity.closedIssues))
         );
       }
 
       if (type === "pulls") {
         heading.textContent = "🔀 Pull requests";
-
         description.textContent =
-          "Pull request totals returned by GitHub for your account.";
+          "Pull requests authored by you according to GitHub Search.";
 
         panel.appendChild(
           addItem(
-            "Pull requests authored",
+            "All authored pull requests",
             number(activity.pullRequestsAuthored)
           )
         );
-
+        panel.appendChild(
+          addItem("Open", number(activity.openPullRequests))
+        );
+        panel.appendChild(
+          addItem("Merged", number(activity.mergedPullRequests))
+        );
         panel.appendChild(
           addItem(
-            "Merged pull requests",
-            number(activity.mergedPullRequests)
+            "Closed without merging",
+            number(activity.closedUnmergedPullRequests)
           )
         );
       }
 
-      if (type === "languages") {
-        heading.textContent = "💻 Language breakdown";
-
+      if (type === "stars") {
+        heading.textContent = "⭐ Repository stars";
         description.textContent =
-          "Combined language byte counts from accessible public and private repositories. Private repository names and links are not displayed.";
+          "The total includes counts returned for accessible repositories. The breakdown lists public repositories only.";
 
-        const languages = statistics.languages || [];
-
-        const total = languages.reduce(
-          (sum, item) => sum + Number(item.bytes || 0),
-          0
+        panel.appendChild(
+          addItem(
+            "Stars across accessible repositories",
+            number(repositories.starsReceivedOnAllAccessibleRepos)
+          )
+        );
+        panel.appendChild(
+          addItem(
+            "Stars on public repositories",
+            number(repositories.starsReceivedOnPublicRepos)
+          )
         );
 
-        if (!languages.length) {
+        for (const repo of repositories.publicDetails || []) {
           panel.appendChild(
-            addItem("Languages", "No language data available")
+            addItem(repo.name, `${number(repo.stars)} stars`, repo.url)
           );
-          return;
         }
+      }
 
-        const list = document.createElement("div");
-        list.className = "language-list";
+      if (type === "forks") {
+        heading.textContent = "🍴 Repository forks";
+        description.textContent =
+          "The total includes counts returned for accessible repositories. The breakdown lists public repositories only.";
 
-        for (const language of languages) {
-          const bytes = Number(language.bytes || 0);
-          const percent = total ? (bytes / total) * 100 : 0;
+        panel.appendChild(
+          addItem(
+            "Forks across accessible repositories",
+            number(repositories.forksOfAllAccessibleRepos)
+          )
+        );
+        panel.appendChild(
+          addItem(
+            "Forks of public repositories",
+            number(repositories.forksOfPublicRepos)
+          )
+        );
 
-          const row = document.createElement("div");
-          row.className = "language-row";
-
-          const label = document.createElement("div");
-          label.className = "language-label";
-
-          const languageName = document.createElement("strong");
-          languageName.textContent = language.name;
-
-          const percentage = document.createElement("span");
-          percentage.textContent = `${percent.toFixed(1)}%`;
-
-          label.append(languageName, percentage);
-
-          const bar = document.createElement("div");
-          bar.className = "bar";
-          bar.setAttribute("role", "progressbar");
-          bar.setAttribute("aria-label", `${language.name} percentage`);
-          bar.setAttribute("aria-valuemin", "0");
-          bar.setAttribute("aria-valuemax", "100");
-          bar.setAttribute("aria-valuenow", percent.toFixed(1));
-
-          const fill = document.createElement("div");
-          fill.className = "bar-fill";
-          fill.style.width = `${percent}%`;
-
-          bar.appendChild(fill);
-          row.append(label, bar);
-          list.appendChild(row);
+        for (const repo of repositories.publicDetails || []) {
+          panel.appendChild(
+            addItem(repo.name, `${number(repo.forks)} forks`, repo.url)
+          );
         }
-
-        panel.appendChild(list);
       }
     }
 
@@ -1005,52 +1095,56 @@
         if (
           !data.profile ||
           !data.repositories ||
+          !data.contributions ||
           !data.activity ||
-          !Array.isArray(data.languages)
+          !Array.isArray(data.allAccessibleLanguages)
         ) {
           throw new Error(
-            "stats.json is missing required fields. Check your statistics workflow."
+            "stats.json is missing required fields. Run the updated statistics workflow."
           );
         }
 
         statistics = data;
 
-        const profile = statistics.profile;
-        const repositories = statistics.repositories;
-        const activity = statistics.activity;
-
         $("profile-name").textContent =
-          profile.name || profile.username || "Vunene Hlungwani";
+          data.profile.name || data.profile.username || "Vunene Hlungwani";
 
         $("profile-login").textContent =
-          `@${profile.username || "VUNENE-HLUNGWANI"}`;
+          `@${data.profile.username || "VUNENE-HLUNGWANI"}`;
 
-        if (profile.avatarUrl) {
-          $("avatar").src = profile.avatarUrl;
+        if (data.profile.avatarUrl) {
+          $("avatar").src = data.profile.avatarUrl;
         }
 
-        if (profile.profileUrl) {
-          $("profile-link").href = profile.profileUrl;
+        if (data.profile.profileUrl) {
+          $("profile-link").href = data.profile.profileUrl;
         }
-
-        $("repo-count").textContent = number(repositories.total);
-
-        $("star-count").textContent =
-          number(repositories.starsReceivedOnPublicRepos);
-
-        $("follower-count").textContent = number(profile.followers);
-        $("issue-count").textContent = number(activity.issuesAuthored);
-        $("pr-count").textContent = number(activity.pullRequestsAuthored);
-
-        $("language-count").textContent =
-          number(statistics.languages.length);
-
-        const allTime = statistics.contributions?.allTime;
 
         $("contribution-count").textContent =
-          allTime == null ? "—" : number(allTime);
+          number(data.contributions.allTime);
 
-        const generatedAt = new Date(statistics.generatedAt);
+        $("repo-count").textContent =
+          number(data.repositories.total);
+
+        $("commit-count").textContent =
+          number(data.contributions.commitContributionsAllYears);
+
+        $("language-count").textContent =
+          number(data.allAccessibleLanguages.length);
+
+        $("issue-count").textContent =
+          number(data.activity.issuesAuthored);
+
+        $("pr-count").textContent =
+          number(data.activity.pullRequestsAuthored);
+
+        $("star-count").textContent =
+          number(data.repositories.starsReceivedOnAllAccessibleRepos);
+
+        $("fork-count").textContent =
+          number(data.repositories.forksOfAllAccessibleRepos);
+
+        const generatedAt = new Date(data.generatedAt);
 
         $("update-status").textContent =
           Number.isNaN(generatedAt.getTime())
@@ -1061,25 +1155,22 @@
       } catch (error) {
         $("update-status").textContent =
           "Statistics could not be loaded";
-
         $("update-status").classList.add("error");
 
         $("detail-title").textContent = "Unable to load statistics";
-
         $("detail-description").textContent =
-          "Check that stats.json exists and that your statistics workflow has run successfully.";
+          "Check that stats.json exists and that the latest statistics workflow completed successfully.";
 
         $("detail-content").replaceChildren();
 
         const message = document.createElement("p");
         message.className = "error";
         message.textContent = error.message;
-
         $("detail-content").appendChild(message);
       }
     }
 
-    document.querySelectorAll(".stat-card").forEach((card) => {
+    document.querySelectorAll(".stat-card").forEach(card => {
       card.addEventListener("click", () => {
         showDetail(card.dataset.detail);
       });
@@ -1089,3 +1180,4 @@
   </script>
 </body>
 </html>
+```

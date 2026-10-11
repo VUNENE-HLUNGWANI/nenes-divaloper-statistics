@@ -5,29 +5,8 @@ const ROOT = process.cwd();
 const STATS_PATH = path.join(ROOT, "stats.json");
 const OUTPUT_PATH = path.join(ROOT, "assets", "github-stats.svg");
 
-const WIDTH = 1000;
-const HEIGHT = 480;
-
-const C = {
-  background: "#21112b",
-  backgroundDark: "#120b18",
-  panel: "#24152e",
-  border: "#493052",
-  pink: "#ff1493",
-  pinkLight: "#ff72bd",
-  purple: "#b66dff",
-  green: "#82edb0",
-  yellow: "#f5df70",
-  blue: "#58b8d8",
-  orange: "#ff9859",
-  text: "#fff5fc",
-  muted: "#c9b5d3",
-  subtle: "#8f7b9a",
-  grid: "#493052"
-};
-
 if (!fs.existsSync(STATS_PATH)) {
-  throw new Error("stats.json was not found. Run generate-stats.js first.");
+  throw new Error("stats.json is missing. Run generate-stats.js first.");
 }
 
 const stats = JSON.parse(fs.readFileSync(STATS_PATH, "utf8"));
@@ -36,352 +15,536 @@ if (!stats.profile || !stats.repositories || !stats.contributions) {
   throw new Error("stats.json is missing required statistics.");
 }
 
-const profile = stats.profile;
-const repositories = stats.repositories;
-const contributions = stats.contributions;
-const commits = stats.repositoryCommits || {};
-const activity = stats.activity || {};
-
-function n(value) {
-  const result = Number(value ?? 0);
-  return Number.isFinite(result) ? result : 0;
-}
-
-function fmt(value) {
-  return n(value).toLocaleString("en-US");
-}
-
-function esc(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function text(x, y, value, size = 13, color = C.text,
-              weight = 400, anchor = "start") {
-  return `<text x="${x}" y="${y}"
-    fill="${color}"
-    font-family="Segoe UI, Arial, sans-serif"
-    font-size="${size}"
-    font-weight="${weight}"
-    text-anchor="${anchor}">${esc(value)}</text>`;
-}
-
-function line(x1, y1, x2, y2, color, width = 1, opacity = 1) {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-    stroke="${color}" stroke-width="${width}" opacity="${opacity}"/>`;
-}
-
-const displayName = profile.name || profile.username || "Divaloper";
-const username = profile.username || "VUNENE-HLUNGWANI";
-
-const generatedDate = stats.generatedAt
-  ? String(stats.generatedAt).slice(0, 10)
-  : new Date().toISOString().slice(0, 10);
-
-// Real metrics supplied by the existing statistics collector.
-const metrics = [
-  {
-    icon: "☆",
-    label: "Stars Earned",
-    value: repositories.starsReceivedOnAllAccessibleRepos ??
-      repositories.starsReceivedOnPublicRepos ?? 0,
-    color: C.orange
-  },
-  {
-    icon: "▣",
-    label: "Repositories",
-    value: repositories.total,
-    color: C.purple
-  },
-  {
-    icon: "⑂",
-    label: "Commits",
-    value: commits.total ?? 0,
-    color: C.pink
-  },
-  {
-    icon: "↗",
-    label: "Pull Requests",
-    value: activity.pullRequestsAuthored ?? 0,
-    color: C.pinkLight
-  },
-  {
-    icon: "◎",
-    label: "Issues",
-    value: activity.issuesAuthored ?? 0,
-    color: C.yellow
-  },
-  {
-    icon: "▤",
-    label: "Code Reviews",
-    value: contributions.pullRequestReviewsAllYears ?? 0,
-    color: C.blue
-  },
-  {
-    icon: "●",
-    label: "Contributions",
-    value: contributions.allTime ?? 0,
-    color: C.green
-  }
-];
-
-const metricRows = metrics.map((item, index) => {
-  const y = 82 + index * 39;
-
-  return `
-    ${text(35, y, item.icon, 22, item.color, 700)}
-    ${text(70, y, item.label, 15, C.text, 500)}
-    ${text(490, y, fmt(item.value), 16, C.text, 700, "end")}
-  `;
-}).join("");
-
-// Yearly activity comes from the actual contribution breakdown.
-const yearly = Array.isArray(contributions.yearly)
-  ? contributions.yearly
-      .filter(item => Number.isFinite(Number(item.year)))
-      .sort((a, b) => Number(a.year) - Number(b.year))
-  : [];
-
-const series = [
-  { key: "issues", label: "Issues", color: C.green },
-  { key: "pullRequests", label: "Pull requests", color: C.pink },
-  { key: "pullRequestReviews", label: "Reviews", color: C.orange },
-  { key: "commits", label: "Commit contributions", color: C.yellow }
-];
-
-const chart = {
-  left: 555,
-  right: 965,
-  top: 125,
-  bottom: 347
+const C = {
+  bg: "#120b18",
+  panel: "#201329",
+  panelLight: "#2b1936",
+  pink: "#ff1493",
+  pinkLight: "#ff72bd",
+  purple: "#b66dff",
+  text: "#fff5fc",
+  muted: "#bba8c5",
+  border: "#42294e",
+  green: "#82edb0",
+  empty: "#3a2942"
 };
 
-const plotWidth = chart.right - chart.left;
-const plotHeight = chart.bottom - chart.top;
+const esc = value => String(value ?? "")
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&apos;");
 
-const chartValues = yearly.flatMap(year =>
-  series.map(item => n(year[item.key]))
+const fmt = value => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toLocaleString("en-US") : "—";
+};
+
+const pct = value => `${Number(value || 0).toFixed(1)}%`;
+
+const contributions = stats.contributions;
+const repositories = stats.repositories;
+const activity = stats.activity || {};
+const repositoryCommits = stats.repositoryCommits || {};
+const languages = stats.allAccessibleLanguages || [];
+const yearly = [...(contributions.yearly || [])]
+  .sort((a, b) => Number(a.year) - Number(b.year));
+
+const publicRepos = repositories.publicDetails || [];
+
+const totalLanguageBytes = languages.reduce(
+  (sum, item) => sum + Number(item.bytes || 0),
+  0
 );
 
-const maxValue = Math.max(1, ...chartValues);
-const tickStep = Math.max(1, Math.ceil(maxValue / 4));
+const languageRows = [...languages]
+  .sort((a, b) => Number(b.bytes || 0) - Number(a.bytes || 0));
 
-let graphMarkup = "";
+const publicRepoCommits = publicRepos
+  .map(repo => ({
+    ...repo,
+    commitTotal: Number(repo.commits || 0)
+  }))
+  .sort((a, b) => b.commitTotal - a.commitTotal);
 
-for (let tick = 0; tick <= maxValue; tick += tickStep) {
-  const y = chart.bottom - (tick / maxValue) * plotHeight;
+const publicCommitTotal = publicRepoCommits.reduce(
+  (sum, repo) => sum + repo.commitTotal,
+  0
+);
 
-  graphMarkup += line(
-    chart.left, y, chart.right, y, C.grid, 1, 0.75
-  );
+const privateCommitTotal = Number(
+  repositoryCommits.privateTotal ?? Math.max(
+    0,
+    Number(repositoryCommits.total || 0) - publicCommitTotal
+  )
+);
 
-  graphMarkup += text(
-    chart.left - 10, y + 4, fmt(tick), 10, C.subtle, 400, "end"
+const privateRepoCount = Number(repositories.private || 0);
+
+const totalCommits = Number(
+  contributions.commitContributionsAllYears || 0
+);
+
+const metrics = [
+  {
+    icon: "📈",
+    label: "CONTRIBUTIONS",
+    value: fmt(contributions.allTime),
+    note: "All recorded years"
+  },
+  {
+    icon: "💻",
+    label: "COMMIT CONTRIBUTIONS",
+    value: fmt(totalCommits),
+    note: "GitHub contribution history"
+  },
+  {
+    icon: "📁",
+    label: "REPOSITORIES",
+    value: fmt(repositories.total),
+    note: `${fmt(repositories.public)} public · ${fmt(repositories.private)} private`
+  },
+  {
+    icon: "⭐",
+    label: "STARS",
+    value: fmt(repositories.starsReceivedOnAllAccessibleRepos),
+    note: "Stars received"
+  },
+  {
+    icon: "🍴",
+    label: "FORKS",
+    value: fmt(repositories.forksOfAllAccessibleRepos),
+    note: "Forks received"
+  },
+  {
+    icon: "🧩",
+    label: "ISSUES",
+    value: fmt(activity.issuesAuthored),
+    note: `${fmt(activity.openIssuesAuthored)} open`
+  },
+  {
+    icon: "🔀",
+    label: "PULL REQUESTS",
+    value: fmt(activity.pullRequestsAuthored),
+    note: `${fmt(activity.mergedPullRequests)} merged`
+  },
+  {
+    icon: "🧠",
+    label: "LANGUAGES",
+    value: fmt(languages.length),
+    note: "Across accessible repositories"
+  }
+];
+
+const parts = [];
+let y = 0;
+
+function add(markup) {
+  parts.push(markup);
+}
+
+function rect(x, top, width, height, fill, radius = 12, stroke = "none") {
+  add(
+    `<rect x="${x}" y="${top}" width="${width}" height="${height}" ` +
+    `rx="${radius}" fill="${fill}" stroke="${stroke}"/>`
   );
 }
 
-function pointX(index) {
-  if (yearly.length <= 1) return chart.left + plotWidth / 2;
-
-  return chart.left + (index / (yearly.length - 1)) * plotWidth;
-}
-
-function pointY(value) {
-  return chart.bottom - (n(value) / maxValue) * plotHeight;
-}
-
-for (const item of series) {
-  const points = yearly.map((year, index) =>
-    `${pointX(index)},${pointY(year[item.key])}`
+function text(x, top, value, size = 14, fill = C.text, weight = 400, extra = "") {
+  add(
+    `<text x="${x}" y="${top}" fill="${fill}" font-size="${size}" ` +
+    `font-weight="${weight}" ${extra}>${esc(value)}</text>`
   );
+}
 
-  if (points.length > 1) {
-    graphMarkup += `
-      <polyline
-        points="${points.join(" ")}"
-        fill="none"
-        stroke="${item.color}"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />`;
+function line(x1, y1, x2, y2, color = C.border, width = 1) {
+  add(
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ` +
+    `stroke="${color}" stroke-width="${width}"/>`
+  );
+}
+
+function section(title, subtitle = "") {
+  text(32, y + 22, title, 17, C.pinkLight, 800);
+  if (subtitle) {
+    text(32, y + 43, subtitle, 11, C.muted, 400);
+    y += 55;
+  } else {
+    y += 34;
+  }
+}
+
+function detailRow(label, value, x, top, width, options = {}) {
+  const h = options.height || 30;
+  text(x + 10, top + 19, label, options.size || 11, options.labelColor || C.text, 500);
+  text(
+    x + width - 10,
+    top + 19,
+    value,
+    options.valueSize || 11,
+    options.valueColor || C.pinkLight,
+    800,
+    'text-anchor="end"'
+  );
+  if (options.divider !== false) {
+    line(x + 8, top + h, x + width - 8, top + h);
+  }
+}
+
+function panel(x, top, width, height, fill = C.panel) {
+  rect(x, top, width, height, fill, 12, C.border);
+}
+
+function graphCell(x, top, size, count, maxCount) {
+  let fill = C.empty;
+
+  if (count > 0) {
+    const intensity = count / Math.max(1, maxCount);
+
+    if (intensity < 0.25) fill = "#77315f";
+    else if (intensity < 0.5) fill = "#b52b7a";
+    else if (intensity < 0.75) fill = "#e83a9b";
+    else fill = C.pinkLight;
   }
 
-  yearly.forEach((year, index) => {
-    graphMarkup += `
-      <circle
-        cx="${pointX(index)}"
-        cy="${pointY(year[item.key])}"
-        r="3"
-        fill="${item.color}"
-      >
-        <title>${esc(year.year)} ${esc(item.label)}: ${fmt(year[item.key])}</title>
-      </circle>`;
-  });
+  rect(x, top, size, size, fill, 2);
 }
 
-yearly.forEach((year, index) => {
-  graphMarkup += text(
-    pointX(index),
-    chart.bottom + 19,
-    String(year.year),
-    11,
-    C.subtle,
-    400,
-    "middle"
+function drawYearGraph(days, x, top, cellSize = 7, gap = 2) {
+  if (!Array.isArray(days) || days.length === 0) {
+    text(x, top + 14, "Daily contribution data unavailable", 11, C.muted);
+    return;
+  }
+
+  const maxCount = Math.max(
+    1,
+    ...days.map(day => Number(day.count || 0))
   );
+
+  for (const day of days) {
+    const date = new Date(`${day.date}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) continue;
+
+    const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const dayOfYear = Math.floor(
+      (date.getTime() - start.getTime()) / 86400000
+    );
+
+    const weekday = Number(day.weekday ?? date.getUTCDay());
+    const week = Math.floor((dayOfYear + start.getUTCDay()) / 7);
+    const row = weekday;
+
+    graphCell(
+      x + week * (cellSize + gap),
+      top + row * (cellSize + gap),
+      cellSize,
+      Number(day.count || 0),
+      maxCount
+    );
+  }
+}
+
+const width = 1000;
+const margin = 32;
+const contentWidth = width - margin * 2;
+
+const generatedDate = new Date(stats.generatedAt);
+const updatedLabel = Number.isNaN(generatedDate.getTime())
+  ? "Latest available statistics"
+  : `Updated ${generatedDate.toISOString().replace("T", " ").slice(0, 16)} UTC`;
+
+add(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" ` +
+  `viewBox="0 0 ${width} 1000" role="img" ` +
+  `aria-labelledby="title description">`);
+
+add(`<title id="title">Nene's Divaloper GitHub Statistics</title>`);
+add(`<desc id="description">Detailed GitHub statistics including contributions, yearly activity, commits, repositories, issues, pull requests and programming languages.</desc>`);
+
+add(`<defs>
+  <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#21112b"/>
+    <stop offset="100%" stop-color="${C.bg}"/>
+  </linearGradient>
+  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="${C.pink}"/>
+    <stop offset="100%" stop-color="${C.purple}"/>
+  </linearGradient>
+</defs>`);
+
+rect(0, 0, width, 1000, "url(#background)", 0);
+y = 0;
+
+// Header
+text(margin, 44, "NENE'S DIVALOPER", 28, C.text, 850);
+text(margin, 70, "GITHUB STATISTICS · VUNENE-HLUNGWANI", 12, C.pinkLight, 700);
+text(margin, 94, "MY CODING JOURNEY", 10, C.muted, 700, 'letter-spacing="2"');
+text(width - margin, 44, "LIVE DATA SNAPSHOT", 11, C.green, 800, 'text-anchor="end"');
+text(width - margin, 68, updatedLabel, 10, C.muted, 400, 'text-anchor="end"');
+rect(margin, 110, contentWidth, 4, "url(#accent)", 2);
+
+y = 132;
+
+// Metric cards: 4 columns x 2 rows.
+section("DEVELOPER OVERVIEW", "Collected from accessible GitHub data");
+
+const columns = 4;
+const gap = 12;
+const cardWidth = (contentWidth - gap * (columns - 1)) / columns;
+const cardHeight = 88;
+
+metrics.forEach((metric, index) => {
+  const col = index % columns;
+  const row = Math.floor(index / columns);
+  const x = margin + col * (cardWidth + gap);
+  const top = y + row * (cardHeight + gap);
+
+  panel(x, top, cardWidth, cardHeight, C.panel);
+
+  text(x + 14, top + 22, metric.icon, 16);
+  text(x + 42, top + 21, metric.label, 9, C.muted, 800);
+  text(x + 14, top + 52, metric.value, 25, C.text, 850);
+  text(x + 14, top + 73, metric.note, 9, C.muted, 500);
 });
 
-const legendPositions = [
-  { x: 555, y: 91 },
-  { x: 690, y: 91 },
-  { x: 825, y: 91 },
-  { x: 555, y: 108 }
-];
+y += 2 * (cardHeight + gap) + 14;
 
-const legendMarkup = series.map((item, index) => {
-  const pos = legendPositions[index];
-
-  return `
-    <circle cx="${pos.x}" cy="${pos.y - 4}" r="4" fill="${item.color}"/>
-    ${text(pos.x + 10, pos.y, item.label, 10, C.muted)}
-  `;
-}).join("");
-
-if (yearly.length === 0) {
-  graphMarkup += text(
-    (chart.left + chart.right) / 2,
-    225,
-    "Yearly activity data is not available yet.",
-    12,
-    C.muted,
-    400,
-    "middle"
-  );
-}
-
-// Language distribution uses actual public repository language byte counts.
-const languages = Array.isArray(stats.publicLanguages)
-  ? [...stats.publicLanguages]
-      .filter(item => item && item.name)
-      .sort((a, b) => n(b.bytes) - n(a.bytes))
-  : [];
-
-const languageTotal = languages.reduce(
-  (total, item) => total + n(item.bytes), 0
+// Contribution timeline, with every returned year.
+section(
+  "CONTRIBUTION HISTORY",
+  "Every available year · daily activity graph · private contributions where GitHub provides them"
 );
 
-const languageColors = [
-  C.pink,
-  C.purple,
-  C.blue,
-  C.orange,
-  C.green,
-  C.yellow
-];
-
-let languageBar = "";
-let languageLegend = "";
-let offset = 0;
-
-if (languageTotal > 0) {
-  languages.forEach((item, index) => {
-    const percentage = n(item.bytes) / languageTotal * 100;
-    const width = 936 * percentage / 100;
-    const color = languageColors[index % languageColors.length];
-
-    languageBar += `
-      <rect
-        x="${32 + offset}"
-        y="383"
-        width="${width}"
-        height="8"
-        fill="${color}"
-      >
-        <title>${esc(item.name)}: ${percentage.toFixed(1)}%</title>
-      </rect>`;
-
-    offset += width;
-
-    const columns = 4;
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    const x = 42 + column * 240;
-    const y = 419 + row * 23;
-
-    languageLegend += `
-      <circle cx="${x}" cy="${y - 4}" r="5" fill="${color}"/>
-      ${text(x + 14, y, item.name, 13, C.text)}
-      ${text(
-        x + 210, y, `${percentage.toFixed(1)}%`,
-        12, C.muted, 400, "end"
-      )}
-    `;
-  });
+if (yearly.length === 0) {
+  panel(margin, y, contentWidth, 48);
+  text(margin + 14, y + 29, "No yearly contribution data available.", 12, C.muted);
+  y += 60;
 } else {
-  languageLegend = text(
-    35, 419, "No public language data available.", 12, C.muted
+  const yearRowHeight = 94;
+
+  for (const item of [...yearly].reverse()) {
+    panel(margin, y, contentWidth, yearRowHeight);
+
+    text(margin + 14, y + 22, String(item.year), 15, C.pinkLight, 850);
+    text(margin + 14, y + 42, `${fmt(item.total)} contributions`, 11, C.text, 700);
+
+    const graphX = margin + 170;
+    drawYearGraph(item.days || [], graphX, y + 12, 7, 2);
+
+    const breakdownX = margin + 635;
+    const breakdownWidth = contentWidth - 650;
+
+    detailRow("Commit contributions", fmt(item.commits), breakdownX, y + 6, breakdownWidth, { height: 21, size: 10, valueSize: 10 });
+    detailRow("Issue contributions", fmt(item.issues), breakdownX, y + 27, breakdownWidth, { height: 21, size: 10, valueSize: 10 });
+    detailRow("Pull request contributions", fmt(item.pullRequests), breakdownX, y + 48, breakdownWidth, { height: 21, size: 10, valueSize: 10 });
+    detailRow("Review contributions", fmt(item.pullRequestReviews), breakdownX, y + 69, breakdownWidth, { height: 21, size: 10, valueSize: 10, divider: false });
+
+    y += yearRowHeight + 8;
+  }
+
+  panel(margin, y, contentWidth, 36, C.panelLight);
+  text(margin + 12, y + 23, "ALL-TIME CONTRIBUTIONS", 10, C.muted, 800);
+  text(width - margin - 12, y + 23, fmt(contributions.allTime), 15, C.green, 850, 'text-anchor="end"');
+  y += 50;
+}
+
+// Commit breakdown
+section("COMMIT BREAKDOWN", "Repository commit counts are collected from accessible repositories");
+
+const commitPanelHeight = 36 + Math.max(1, publicCommitRows.length) * 29 +
+  (privateRepoCount > 0 ? 29 : 0) + 18;
+
+panel(margin, y, contentWidth, commitPanelHeight);
+
+detailRow(
+  "Total commits across accessible repositories",
+  fmt(repositoryCommits.total),
+  margin + 8,
+  y + 6,
+  contentWidth - 16,
+  { height: 29 }
+);
+
+let commitY = y + 35;
+
+for (const repo of publicCommitRows) {
+  detailRow(
+    repo.name,
+    `${fmt(repo.commitTotal)} commits`,
+    margin + 8,
+    commitY,
+    contentWidth - 16,
+    { height: 29, size: 11, valueSize: 11 }
+  );
+  commitY += 29;
+}
+
+if (privateRepoCount > 0) {
+  detailRow(
+    `Private repositories (${fmt(privateRepoCount)} · names hidden)`,
+    `${fmt(privateCommitTotal)} commits`,
+    margin + 8,
+    commitY,
+    contentWidth - 16,
+    { height: 29, size: 11, valueSize: 11, divider: false }
   );
 }
 
-const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg"
-     width="${WIDTH}" height="${HEIGHT}"
-     viewBox="0 0 ${WIDTH} ${HEIGHT}"
-     role="img" aria-labelledby="title description">
+y += commitPanelHeight + 18;
 
-  <title id="title">Nene's GitHub Dashboard</title>
-  <desc id="description">
-    Automatically generated GitHub statistics for ${esc(displayName)},
-    including repositories, stars, commits, issues, pull requests,
-    code reviews, yearly activity and public programming languages.
-  </desc>
+// Repository summary
+section("REPOSITORY BREAKDOWN", "Private repository names are never displayed");
 
-  <defs>
-    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="${C.background}"/>
-      <stop offset="100%" stop-color="${C.backgroundDark}"/>
-    </linearGradient>
+const repoSummaryWidth = (contentWidth - gap * 2) / 3;
+const repoSummary = [
+  ["TOTAL", fmt(repositories.total)],
+  ["PUBLIC", fmt(repositories.public)],
+  ["PRIVATE", fmt(repositories.private)]
+];
 
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="${C.pink}"/>
-      <stop offset="100%" stop-color="${C.purple}"/>
-    </linearGradient>
-  </defs>
+repoSummary.forEach((item, index) => {
+  const x = margin + index * (repoSummaryWidth + gap);
+  panel(x, y, repoSummaryWidth, 62);
+  text(x + 12, y + 21, item[0], 10, C.muted, 800);
+  text(x + 12, y + 47, item[1], 22, C.text, 850);
+});
 
-  <rect x="1" y="1" width="998" height="478" rx="18"
-        fill="url(#background)" stroke="${C.border}" stroke-width="1.5"/>
-  <rect x="1" y="1" width="998" height="4" rx="2" fill="url(#accent)"/>
+y += 76;
 
-  ${text(32, 38, "Nene's GitHub Dashboard", 20, C.text, 800)}
-  ${text(32, 58, `@${username} · MY CODING JOURNEY`, 11, C.muted)}
+const repoDetails = publicRepos;
+const repoHeight = Math.max(1, repoDetails.length) * 38 + 12;
+panel(margin, y, contentWidth, repoHeight);
 
-  ${metricRows}
+if (repoDetails.length === 0) {
+  text(margin + 14, y + 29, "No public repository details available.", 12, C.muted);
+} else {
+  let repoY = y + 4;
 
-  ${line(520, 68, 520, 355, C.border, 1)}
+  for (const repo of repoDetails) {
+    text(margin + 14, repoY + 20, repo.name, 11, C.text, 750);
+    text(
+      margin + 14,
+      repoY + 33,
+      repo.language || "Language not specified",
+      9,
+      C.muted,
+      400
+    );
 
-  ${text(555, 66, "DEVELOPMENT ACTIVITY", 13, C.text, 800)}
-  ${legendMarkup}
-  ${graphMarkup}
+    text(
+      width - margin - 14,
+      repoY + 20,
+      `★ ${fmt(repo.stars)}   ·   Forks ${fmt(repo.forks)}`,
+      10,
+      C.pinkLight,
+      800,
+      'text-anchor="end"'
+    );
 
-  ${text(32, 367, "PUBLIC LANGUAGE DISTRIBUTION", 12, C.text, 800)}
-  ${languageBar}
-  ${languageLegend}
+    if (repo.url) {
+      add(
+        `<a href="${esc(repo.url)}" target="_blank">` +
+        `<title>${esc(repo.name)} on GitHub</title>` +
+        `<rect x="${margin + 8}" y="${repoY}" width="${contentWidth - 16}" height="36" fill="transparent"/>` +
+        `</a>`
+      );
+    }
 
-  ${text(32, 463, `Updated ${generatedDate}`, 10, C.subtle)}
-  ${text(968, 463, "Nene's Divaloper", 10, C.pinkLight, 700, "end")}
-</svg>
-`;
+    line(margin + 10, repoY + 37, width - margin - 10, repoY + 37);
+    repoY += 38;
+  }
+}
+
+y += repoHeight + 18;
+
+// Issues and pull requests
+section("ISSUES & PULL REQUESTS", "Authored activity returned by GitHub Search");
+
+const halfWidth = (contentWidth - gap) / 2;
+const activityHeight = 140;
+
+panel(margin, y, halfWidth, activityHeight);
+text(margin + 14, y + 25, "ISSUES", 13, C.pinkLight, 850);
+detailRow("Authored", fmt(activity.issuesAuthored), margin + 8, y + 34, halfWidth - 16);
+detailRow("Open", fmt(activity.openIssuesAuthored), margin + 8, y + 64, halfWidth - 16);
+detailRow("Closed", fmt(activity.closedIssues), margin + 8, y + 94, halfWidth - 16, { divider: false });
+
+const prX = margin + halfWidth + gap;
+panel(prX, y, halfWidth, activityHeight);
+text(prX + 14, y + 25, "PULL REQUESTS", 13, C.pinkLight, 850);
+detailRow("Authored", fmt(activity.pullRequestsAuthored), prX + 8, y + 34, halfWidth - 16);
+detailRow("Open", fmt(activity.openPullRequests), prX + 8, y + 64, halfWidth - 16);
+detailRow("Merged", fmt(activity.mergedPullRequests), prX + 8, y + 94, halfWidth - 16, { divider: false });
+
+y += activityHeight + 18;
+
+panel(margin, y, contentWidth, 48, C.panelLight);
+text(margin + 14, y + 19, "CLOSED WITHOUT MERGING", 10, C.muted, 800);
+text(margin + 14, y + 37, fmt(activity.closedUnmergedPullRequests), 13, C.text, 850);
+text(width - margin - 14, y + 30, `Review contributions · ${fmt(contributions.pullRequestReviewsAllYears)}`, 12, C.pinkLight, 800, 'text-anchor="end"');
+
+y += 64;
+
+// Language breakdown
+section("PROGRAMMING LANGUAGES", "Combined byte totals from accessible public and private repositories");
+
+const languageRowHeight = 39;
+const languagePanelHeight = Math.max(1, languageRows.length) * languageRowHeight + 16;
+panel(margin, y, contentWidth, languagePanelHeight);
+
+if (languageRows.length === 0 || totalLanguageBytes === 0) {
+  text(margin + 14, y + 30, "No language data available.", 12, C.muted);
+} else {
+  let languageY = y + 8;
+
+  for (const language of languageRows) {
+    const bytes = Number(language.bytes || 0);
+    const percentage = bytes / totalLanguageBytes * 100;
+
+    text(margin + 14, languageY + 14, language.name, 11, C.text, 750);
+    text(
+      width - margin - 14,
+      languageY + 14,
+      `${pct(percentage)} · ${fmt(bytes)} bytes`,
+      10,
+      C.muted,
+      600,
+      'text-anchor="end"'
+    );
+
+    const barX = margin + 14;
+    const barY = languageY + 21;
+    const barWidth = contentWidth - 28;
+
+    rect(barX, barY, barWidth, 7, C.empty, 4);
+    rect(barX, barY, Math.max(0, barWidth * percentage / 100), 7, "url(#accent)", 4);
+
+    languageY += languageRowHeight;
+  }
+}
+
+y += languagePanelHeight + 20;
+
+// Footer
+line(margin, y, width - margin, y);
+text(margin, y + 23, "NENE'S DIVALOPER", 10, C.pinkLight, 850);
+text(width - margin, y + 23, "Generated automatically from GitHub statistics", 10, C.muted, 400, 'text-anchor="end"');
+y += 42;
+
+// Set the real dynamic height instead of a fixed, clipped canvas.
+const finalSvg = parts.join("\n")
+  .replace('viewBox="0 0 1000 1000"', `viewBox="0 0 1000 ${y}"`)
+  .replace('height="1000"', `height="${y}"`)
+  .replace(
+    `<rect x="0" y="0" width="${width}" height="1000"`,
+    `<rect x="0" y="0" width="${width}" height="${y}"`
+  );
 
 fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
-fs.writeFileSync(OUTPUT_PATH, svg, "utf8");
+fs.writeFileSync(OUTPUT_PATH, finalSvg + "\n", "utf8");
 
-console.log(`Divaloper dashboard generated: ${OUTPUT_PATH}`);
-console.log(`Statistics timestamp: ${stats.generatedAt}`);
-console.log(`Metrics displayed: ${metrics.length}`);
-console.log(`Activity years displayed: ${yearly.length}`);
-console.log(`Public languages displayed: ${languages.length}`);
+console.log(`Generated ${OUTPUT_PATH}`);
+console.log(`SVG size: ${width} x ${y}`);
+console.log(`Years included: ${yearly.length}`);
+console.log(`Public repositories listed: ${publicRepos.length}`);
+console.log(`Languages included: ${languageRows.length}`);

@@ -1,3 +1,4 @@
+
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -20,6 +21,7 @@ async function github(endpoint) {
 
   if (!response.ok) {
     const details = await response.text();
+
     throw new Error(
       `GitHub API error ${response.status}: ${endpoint}\n${details}`
     );
@@ -142,9 +144,10 @@ async function getContributionPeriod(username, from, to) {
   return data.user.contributionsCollection;
 }
 
-function getDailyContributions(calendar) {
+function getDailyContributions(calendar, year) {
   return calendar.weeks
     .flatMap(week => week.contributionDays)
+    .filter(day => day.date.startsWith(`${year}-`))
     .map(day => ({
       date: day.date,
       count: day.contributionCount
@@ -158,8 +161,6 @@ async function getContributionStats(username) {
   const yearsWithContributions =
     await getContributionYears(username);
 
-  // Find the earliest calendar year GitHub reports.
-  // Generate every year from that year through the current year.
   const earliestYear = yearsWithContributions.length
     ? Math.min(...yearsWithContributions)
     : currentYear;
@@ -167,13 +168,13 @@ async function getContributionStats(username) {
   const yearly = [];
 
   for (let year = earliestYear; year <= currentYear; year++) {
-    const from = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
+    // Use exact calendar-year boundaries.
+    const from = new Date(Date.UTC(year, 0, 1));
 
-    const yearEnd = new Date(
-      Date.UTC(year + 1, 0, 1, 0, 0, 0) - 1000
-    );
-
-    const to = year === currentYear ? now : yearEnd;
+    // Use an exclusive next-year boundary to avoid overlap.
+    const to = year === currentYear
+      ? now
+      : new Date(Date.UTC(year + 1, 0, 1));
 
     const collection = await getContributionPeriod(
       username,
@@ -182,10 +183,21 @@ async function getContributionStats(username) {
     );
 
     const calendar = collection.contributionCalendar;
+    const days = getDailyContributions(calendar, year);
 
+    const dailyTotal = days.reduce(
+      (sum, day) => sum + day.count,
+      0
+    );
+
+    // Preserve GitHub's official calendar total.
+    // Also retain the daily sum to help identify discrepancies.
     yearly.push({
       year,
       total: calendar.totalContributions,
+      dailyTotal,
+      dailyTotalsMatch:
+        dailyTotal === calendar.totalContributions,
       commits: collection.totalCommitContributions,
       issues: collection.totalIssueContributions,
       pullRequests: collection.totalPullRequestContributions,
@@ -193,8 +205,13 @@ async function getContributionStats(username) {
         collection.totalPullRequestReviewContributions,
       restrictedContributions:
         collection.restrictedContributionsCount,
-      days: getDailyContributions(calendar)
+      days
     });
+
+    console.log(
+      `${year}: GitHub total=${calendar.totalContributions}, ` +
+      `daily sum=${dailyTotal}`
+    );
   }
 
   const sum = key =>
@@ -205,22 +222,15 @@ async function getContributionStats(username) {
 
   return {
     allTime: sum("total"),
-
     commitContributionsAllYears: sum("commits"),
-
     issuesAllYears: sum("issues"),
-
     pullRequestsAllYears: sum("pullRequests"),
-
     pullRequestReviewsAllYears: sum("pullRequestReviews"),
-
     restrictedContributionsAllYears:
       sum("restrictedContributions"),
-
     earliestYear,
     currentYear,
     yearly,
-
     currentYearCalendar:
       yearly.find(item => item.year === currentYear)?.days || []
   };
@@ -302,7 +312,7 @@ async function main() {
 
   const languages = await getLanguages(repositories);
 
-  console.log("Collecting contribution history by calendar year...");
+  console.log("Collecting yearly contribution history...");
 
   const contributions = await getContributionStats(username);
 
@@ -358,13 +368,10 @@ async function main() {
       total: repositories.length,
       public: publicRepos.length,
       private: privateRepos.length,
-
       starsReceivedOnAllAccessibleRepos: starsAllAccessible,
       starsReceivedOnPublicRepos: starsPublic,
-
       forksOfAllAccessibleRepos: forksAllAccessible,
       forksOfPublicRepos: forksPublic,
-
       publicDetails: publicRepositoryDetails
     },
 
@@ -374,7 +381,6 @@ async function main() {
       issuesAuthored,
       openIssuesAuthored,
       closedIssues,
-
       pullRequestsAuthored,
       openPullRequests,
       mergedPullRequests,
@@ -393,13 +399,17 @@ async function main() {
   );
 
   console.log(`Statistics saved to ${outputPath}`);
-  console.log(
-    `Contributions across calendar years: ${contributions.allTime}`
-  );
-  console.log(
-    `Commit contributions across calendar years: ` +
-    `${contributions.commitContributionsAllYears}`
-  );
+  console.log(`Total contributions: ${contributions.allTime}`);
+
+  console.log("Yearly contribution summary:");
+
+  for (const item of contributions.yearly) {
+    console.log(
+      `${item.year}: ${item.total} contributions ` +
+      `(daily sum: ${item.dailyTotal})`
+    );
+  }
+
   console.log(
     `Calendar years included: ` +
     `${contributions.earliestYear}-${contributions.currentYear}`

@@ -1,4 +1,3 @@
-
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -318,7 +317,6 @@ function drawYearGraph(days, x, top, cellSize = 6, gap = 2) {
 
     const weekday = date.getUTCDay();
 
-    // Keep dates aligned to their real calendar weekday.
     const week = Math.floor(
       (dayOfYear + startOfYear.getUTCDay()) / 7
     );
@@ -345,8 +343,6 @@ const updatedLabel =
     ? "Latest available statistics"
     : `Updated ${generatedDate.toISOString().replace("T", " ").slice(0, 16)} UTC`;
 
-// Use placeholders so the root SVG and background receive the same
-// dynamically calculated height when the document is finished.
 add(
   `<svg xmlns="http://www.w3.org/2000/svg" ` +
     `width="${width}" height="__SVG_HEIGHT__" ` +
@@ -453,7 +449,6 @@ if (yearly.length === 0) {
     text(margin + 14, y + 22, String(item.year), 15, C.pinkLight, 850);
     text(margin + 14, y + 42, `${fmt(item.total)} contributions`, 11, C.text, 700);
 
-    // The smaller cells leave enough space for the contribution breakdown.
     drawYearGraph(item.days || [], margin + 170, y + 12, 6, 2);
 
     const breakdownX = margin + 635;
@@ -801,6 +796,9 @@ text(
 );
 
 y += 42;
+
+// FIX: CLOSE THE SVG BEFORE VALIDATION.
+add("</svg>");
 
 // FINALIZE DYNAMIC SVG HEIGHT
 const finalSvg = parts

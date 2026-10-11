@@ -9,7 +9,6 @@ on:
 permissions:
   contents: write
 
-# Prevent overlapping runs from racing to push to main.
 concurrency:
   group: update-github-statistics
   cancel-in-progress: false
@@ -29,16 +28,34 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Generate statistics
-        run: node scripts/generate-stats.js
+      - name: Verify GitHub token
         env:
           GH_STATS_TOKEN: ${{ secrets.GH_STATS_TOKEN }}
+        run: |
+          if [ -z "$GH_STATS_TOKEN" ]; then
+            echo "::error::GH_STATS_TOKEN is missing. Add it under repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          echo "GitHub statistics token is configured."
+
+      - name: Generate statistics
+        env:
+          GH_STATS_TOKEN: ${{ secrets.GH_STATS_TOKEN }}
+        run: node scripts/generate-stats.js
 
       - name: Validate generated statistics
         run: |
-          node -e '
-          const fs = require("fs");
-          const data = JSON.parse(fs.readFileSync("stats.json", "utf8"));
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          if (!fs.existsSync("stats.json")) {
+            throw new Error("stats.json was not generated.");
+          }
+
+          const data = JSON.parse(
+            fs.readFileSync("stats.json", "utf8")
+          );
 
           const required = [
             "profile",
@@ -49,20 +66,90 @@ jobs:
             "allAccessibleLanguages"
           ];
 
-          const missing = required.filter(key => !(key in data));
+          const missing = required.filter(
+            key => !(key in data)
+          );
 
-          if (missing.length) {
-            console.error("Missing statistics sections:", missing.join(", "));
-            process.exit(1);
+          if (missing.length > 0) {
+            throw new Error(
+              `Missing statistics sections: ${missing.join(", ")}`
+            );
           }
 
-          console.log("All required statistics sections are present.");
-          console.log("Contribution years:", data.contributions.yearly?.length ?? 0);
-          console.log("Accessible languages:", data.allAccessibleLanguages.length);
-          '
+          if (!Array.isArray(data.contributions.yearly)) {
+            throw new Error(
+              "contributions.yearly must be an array."
+            );
+          }
 
-      - name: Generate custom SVG stats card
+          if (!Array.isArray(data.allAccessibleLanguages)) {
+            throw new Error(
+              "allAccessibleLanguages must be an array."
+            );
+          }
+
+          if (!data.repositories.publicDetails ||
+              !Array.isArray(data.repositories.publicDetails)) {
+            throw new Error(
+              "repositories.publicDetails must be an array."
+            );
+          }
+
+          console.log("Statistics JSON validation passed.");
+          console.log(
+            "Contribution years:",
+            data.contributions.yearly.length
+          );
+          console.log(
+            "Accessible repositories:",
+            data.repositories.total
+          );
+          console.log(
+            "Accessible languages:",
+            data.allAccessibleLanguages.length
+          );
+          NODE
+
+      - name: Generate custom SVG dashboard
         run: node scripts/generate-card.js
+
+      - name: Validate generated SVG
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const file = "assets/github-stats.svg";
+
+          if (!fs.existsSync(file)) {
+            throw new Error("SVG card was not generated.");
+          }
+
+          const svg = fs.readFileSync(file, "utf8");
+
+          const checks = [
+            ["SVG opening tag", /<svg\b/],
+            ["SVG closing tag", /<\/svg>/],
+            ["Dynamic height", /height="\d+"/],
+            ["Dynamic viewBox", /viewBox="0 0 1000 \d+"/],
+            ["Contribution history", /CONTRIBUTION HISTORY/],
+            ["Commit breakdown", /COMMIT BREAKDOWN/],
+            ["Repository breakdown", /REPOSITORY BREAKDOWN/],
+            ["Programming languages", /PROGRAMMING LANGUAGES/]
+          ];
+
+          for (const [label, pattern] of checks) {
+            if (!pattern.test(svg)) {
+              throw new Error(`SVG validation failed: ${label} missing.`);
+            }
+          }
+
+          if (svg.includes("__SVG_HEIGHT__")) {
+            throw new Error("SVG still contains an unresolved height placeholder.");
+          }
+
+          console.log("SVG dashboard validation passed.");
+          console.log("SVG size:", Buffer.byteLength(svg), "bytes.");
+          NODE
 
       - name: Commit and push updated statistics and card
         run: |

@@ -800,6 +800,8 @@
       return row;
     }
 
+    // A collapsible row: the label and total show first,
+    // and the items inside appear only after clicking it.
     function addGroup(label, value, rows, open) {
       if (!rows.length) {
         return addItem(label, value);
@@ -918,24 +920,22 @@
       holder.appendChild(legend);
     }
 
+    // One tab per year, from the first year on the account up to
+    // the current year. The newest year opens first.
     function addContributionExplorer(contributions, panel) {
-      const options = [
-        {
-          label: "Last 365 days",
-          days: contributions.last365DaysCalendar || [],
-          total: contributions.last365Days
-        }
-      ];
-
-      const years = [...(contributions.yearly || [])]
-        .sort((a, b) => b.year - a.year);
-
-      for (const year of years) {
-        options.push({
+      const options = [...(contributions.yearly || [])]
+        .sort((a, b) => b.year - a.year)
+        .map(year => ({
           label: String(year.year),
           days: year.days || [],
           total: year.total
-        });
+        }));
+
+      if (!options.length) {
+        panel.appendChild(
+          addItem("Daily contribution data", "Unavailable")
+        );
+        return;
       }
 
       const title = document.createElement("h3");
@@ -954,7 +954,7 @@
         });
 
         title.textContent =
-          `${number(option.total)} contributions · ${option.label}`;
+          `${number(option.total)} contributions in ${option.label}`;
 
         holder.replaceChildren();
         drawGraph(option.days, holder, option.label);
@@ -1064,7 +1064,7 @@
         heading.textContent = "📈 Contribution history";
 
         description.textContent =
-          "Total contributions with every year listed, plus the daily graph for the last 365 days or any year.";
+          "All-time contributions with every year inside, and the daily graph for each year.";
 
         panel.appendChild(
           addGroup(
@@ -1133,44 +1133,62 @@
         heading.textContent = "💻 Commit contributions";
 
         description.textContent =
-          "Commit contributions per year (as GitHub counts them on your profile), plus the real commit count authored on default branches.";
+          "The total is the commit contributions on your profile, added up across every year. Click a group to see what is inside.";
 
         panel.appendChild(
           addGroup(
-            "All-years commit contributions",
+            "All-time commit contributions",
             number(contributions.commitContributionsAllYears),
             years.map(year =>
               addItem(
                 String(year.year),
                 `${number(year.commits)} commits`
               )
-            ),
-            true
+            )
           )
         );
 
-        panel.appendChild(
-          addItem(
-            "Commits on default branches (all repositories)",
-            number(contributions.repositoryCommitsAllRepos)
-          )
+        const repoCommits = statistics.repositoryCommits || {};
+
+        const publicCommitRows = publicDetails
+          .map(repo => ({
+            name: repo.name,
+            url: repo.url,
+            commits: Number(repo.commits || 0)
+          }))
+          .sort((a, b) => b.commits - a.commits);
+
+        const publicCommitTotal = publicCommitRows.reduce(
+          (sum, repo) => sum + repo.commits,
+          0
         );
 
-        const commitRows =
-          contributions.repositoryCommitsPublicDetails || [];
+        const privateCommitTotal =
+          repoCommits.privateTotal !== undefined
+            ? Number(repoCommits.privateTotal || 0)
+            : Math.max(
+                0,
+                Number(repoCommits.total || 0) - publicCommitTotal
+              );
+
+        const projectRows = publicCommitRows.map(repo =>
+          addItem(repo.name, `${number(repo.commits)} commits`, repo.url)
+        );
+
+        if (Number(repositories.private) > 0) {
+          projectRows.push(
+            addItem(
+              `Private repositories (${number(repositories.private)}, names hidden)`,
+              `${number(privateCommitTotal)} commits`
+            )
+          );
+        }
 
         panel.appendChild(
           addGroup(
-            "Commits in public repositories",
-            number(
-              commitRows.reduce(
-                (sum, repo) => sum + Number(repo.commits || 0),
-                0
-              )
-            ),
-            commitRows.map(repo =>
-              addItem(repo.name, `${number(repo.commits)} commits`)
-            )
+            "Commits per project",
+            `${number(publicCommitTotal + privateCommitTotal)} commits`,
+            projectRows
           )
         );
       }

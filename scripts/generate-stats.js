@@ -4,24 +4,26 @@ const path = require("node:path");
 const TOKEN = process.env.GH_STATS_TOKEN;
 const API = "https://api.github.com";
 const GRAPHQL_API = `${API}/graphql`;
-const API_VERSION = "2022-11-28";
 
 if (!TOKEN) {
   throw new Error("GH_STATS_TOKEN is missing.");
 }
 
+const API_HEADERS = {
+  Authorization: `Bearer ${TOKEN}`,
+  Accept: "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28"
+};
+
 async function github(endpoint) {
   const response = await fetch(`${API}${endpoint}`, {
-    headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": API_VERSION
-    }
+    headers: API_HEADERS
   });
 
   if (!response.ok) {
+    const details = await response.text();
     throw new Error(
-      `GitHub API error ${response.status}: ${endpoint}`
+      `GitHub API error ${response.status}: ${endpoint}\n${details}`
     );
   }
 
@@ -32,49 +34,39 @@ async function graphql(query, variables = {}) {
   const response = await fetch(GRAPHQL_API, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${TOKEN}`,
-      Accept: "application/vnd.github+json",
+      ...API_HEADERS,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({ query, variables })
   });
 
-  if (!response.ok) {
-    throw new Error(
-      `GitHub GraphQL API error ${response.status}`
-    );
-  }
-
   const result = await response.json();
 
-  if (result.errors) {
+  if (!response.ok || result.errors) {
+    const messages = (result.errors || [])
+      .map(error => error.message)
+      .join("; ");
+
     throw new Error(
-      result.errors.map(error => error.message).join("; ")
+      `GitHub GraphQL API error ${response.status}: ` +
+      `${messages || response.statusText}`
     );
   }
 
   return result.data;
 }
 
-// Get every repository owned by the authenticated account,
-// including accessible private repositories.
 async function getAllRepositories() {
   const repositories = [];
-  let page = 1;
 
-  while (true) {
+  for (let page = 1; ; page++) {
     const batch = await github(
-      `/user/repos?visibility=all&affiliation=owner` +
-      `&per_page=100&page=${page}&sort=updated`
+      `/user/repos?visibility=all&affiliation=owner&per_page=100&page=${page}&sort=updated`
     );
 
     repositories.push(...batch);
 
-    if (batch.length < 100) {
-      break;
-    }
-
-    page++;
+    if (batch.length < 100) break;
   }
 
   return repositories;
@@ -101,16 +93,25 @@ async function getContributionYears(username) {
 
   const data = await graphql(query, { username });
 
+  if (!data.user) {
+    throw new Error(`GitHub user not found: ${username}`);
+  }
+
   return data.user.contributionsCollection.contributionYears;
 }
 
 async function getContributionPeriod(username, from, to) {
+  const maxRange = 365 * 24 * 60 * 60 * 1000;
+
+  if (to.getTime() - from.getTime() > maxRange) {
+    throw new Error(
+      `Contribution date range exceeds one year: ` +
+      `${from.toISOString()} to ${to.toISOString()}`
+    );
+  }
+
   const query = `
-    query(
-      $username: String!,
-      $from: DateTime!,
-      $to: DateTime!
-    ) {
+    query($username: String!, $from: DateTime!, $to: DateTime!) {
       user(login: $username) {
         contributionsCollection(from: $from, to: $to) {
           totalCommitContributions
@@ -123,8 +124,9 @@ async function getContributionPeriod(username, from, to) {
             weeks {
               contributionDays {
                 date
-                contributionCount
                 weekday
+                contributionCount
+                contributionLevel
               }
             }
           }
@@ -139,49 +141,161 @@ async function getContributionPeriod(username, from, to) {
     to: to.toISOString()
   });
 
+  if (!data.user) {
+    throw new Error(`GitHub user not found: ${username}`);
+  }
+
   return data.user.contributionsCollection;
 }
 
-function getDailyContributions(calendar) {
-  return calendar.weeks
-    .flatMap(week => week.contributionDays)
-    .map(day => ({
-      date: day.date,
-      count: day.contributionCount,
-      weekday: day.weekday
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+function getDailyContributions(calendar, year, now) {
+  const byDate = new Map();
+
+  for (const day of calendar.weeks.flatMap(
+    week => week.contributionDays
+  )) {
+    if (day.date.startsWith(`${year}-`)) {
+      const count = Number(day.contributionCount || 0);
+
+      byDate.set(day.date, {
+        date: day.date,
+        weekday: day.weekday,
+        count,
+        level: day.contributionLevel ||
+          (count > 0 ? "FIRST_QUARTILE" : "NONE")
+      });
+    }
+  }
+
+  const start = new Date(Date.UTC(year, 0, 1));
+
+  const end = year === now.getUTCFullYear()
+    ? new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate()
+      ))
+    : new Date(Date.UTC(year + 1, 0, 1) - 86400000);
+
+  const days = [];
+
+  for (
+    const cursor = new Date(start);
+    cursor <= end;
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  ) {
+    const date = cursor.toISOString().slice(0, 10);
+
+    days.push(byDate.get(date) || {
+      date,
+      weekday: cursor.getUTCDay(),
+      count: 0,
+      level: "NONE"
+    });
+  }
+
+  return days;
 }
 
-async function getContributionStats(username) {
+async function getContributionYearPeriod(username, year, now) {
+  const from = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
+
+  const to = year === now.getUTCFullYear()
+    ? now
+    : new Date(Date.UTC(year + 1, 0, 1, 0, 0, 0) - 1000);
+
+  if (
+    to.getTime() - from.getTime() <=
+    365 * 24 * 60 * 60 * 1000
+  ) {
+    return getContributionPeriod(username, from, to);
+  }
+
+  const middle = new Date(Date.UTC(year, 6, 1, 0, 0, 0));
+
+  const firstHalf = await getContributionPeriod(
+    username,
+    from,
+    new Date(middle.getTime() - 1000)
+  );
+
+  const secondHalf = await getContributionPeriod(
+    username,
+    middle,
+    to
+  );
+
+  const fields = [
+    "totalCommitContributions",
+    "totalIssueContributions",
+    "totalPullRequestContributions",
+    "totalPullRequestReviewContributions",
+    "restrictedContributionsCount"
+  ];
+
+  const combined = {};
+
+  for (const field of fields) {
+    combined[field] = firstHalf[field] + secondHalf[field];
+  }
+
+  combined.contributionCalendar = {
+    totalContributions:
+      firstHalf.contributionCalendar.totalContributions +
+      secondHalf.contributionCalendar.totalContributions,
+
+    weeks: [
+      ...firstHalf.contributionCalendar.weeks,
+      ...secondHalf.contributionCalendar.weeks
+    ]
+  };
+
+  return combined;
+}
+
+async function getContributionStats(username, accountCreatedAt) {
   const now = new Date();
   const currentYear = now.getUTCFullYear();
-  const years = await getContributionYears(username);
+
+  const contributionYears = await getContributionYears(username);
+
+  const accountCreationYear = accountCreatedAt
+    ? new Date(accountCreatedAt).getUTCFullYear()
+    : currentYear;
+
+  const earliestYear = Math.min(
+    accountCreationYear,
+    ...(contributionYears.length
+      ? contributionYears
+      : [currentYear])
+  );
+
   const yearly = [];
 
-  // Fetch each calendar year separately. GitHub limits the
-  // time span allowed in an individual contributions query.
-  for (const year of [...years].sort((a, b) => a - b)) {
-    const from = new Date(Date.UTC(year, 0, 1));
-    const nextYearStart = new Date(Date.UTC(year + 1, 0, 1));
-
-    // Use the current time for the current year; otherwise,
-    // stop just before the next calendar year starts.
-    const to = year === currentYear
-      ? now
-      : new Date(nextYearStart.getTime() - 1000);
-
-    const collection = await getContributionPeriod(
+  for (
+    let year = earliestYear;
+    year <= currentYear;
+    year++
+  ) {
+    const collection = await getContributionYearPeriod(
       username,
-      from,
-      to
+      year,
+      now
     );
 
     const calendar = collection.contributionCalendar;
+    const days = getDailyContributions(calendar, year, now);
+
+    const dailyTotal = days.reduce(
+      (sum, day) => sum + day.count,
+      0
+    );
 
     yearly.push({
       year,
       total: calendar.totalContributions,
+      dailyTotal,
+      dailyTotalsMatch: dailyTotal === calendar.totalContributions,
       commits: collection.totalCommitContributions,
       issues: collection.totalIssueContributions,
       pullRequests: collection.totalPullRequestContributions,
@@ -189,143 +303,180 @@ async function getContributionStats(username) {
         collection.totalPullRequestReviewContributions,
       restrictedContributions:
         collection.restrictedContributionsCount,
-      days: getDailyContributions(calendar)
+      days
     });
+
+    console.log(
+      `${year}: contributions=${calendar.totalContributions}, ` +
+      `daily sum=${dailyTotal}, ` +
+      `graph commits=${collection.totalCommitContributions}`
+    );
   }
 
-  // This is the rolling 365-day period, not the current
-  // calendar year and not a single day's contribution count.
-  const last365Start = new Date(
-    now.getTime() - 365 * 24 * 60 * 60 * 1000
-  );
+  // Separate rolling 365-day statistic.
+  const endDate = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  ));
 
-  const recent = await getContributionPeriod(
+  const startDate = new Date(endDate);
+  startDate.setUTCDate(startDate.getUTCDate() - 364);
+
+  const rolling = await getContributionPeriod(
     username,
-    last365Start,
+    startDate,
     now
   );
 
-  const recentCalendar = recent.contributionCalendar;
-  const currentYearData = yearly.find(
-    item => item.year === currentYear
+  const startText = startDate.toISOString().slice(0, 10);
+  const endText = endDate.toISOString().slice(0, 10);
+
+  const last365DaysCalendar =
+    rolling.contributionCalendar.weeks
+      .flatMap(week => week.contributionDays)
+      .filter(day =>
+        day.date >= startText &&
+        day.date <= endText
+      )
+      .map(day => ({
+        date: day.date,
+        weekday: day.weekday,
+        count: day.contributionCount,
+        level: day.contributionLevel
+      }));
+
+  const sum = key => yearly.reduce(
+    (total, item) => total + Number(item[key] || 0),
+    0
+  );
+
+  const dailyRollingTotal = last365DaysCalendar.reduce(
+    (total, day) => total + day.count,
+    0
+  );
+
+  console.log(
+    `Last 365 days: calendar total=` +
+    `${rolling.contributionCalendar.totalContributions}, ` +
+    `daily sum=${dailyRollingTotal}, ` +
+    `days returned=${last365DaysCalendar.length}`
   );
 
   return {
-    // Genuine total across the returned calendar years.
-    allTime: yearly.reduce(
-      (sum, item) => sum + item.total,
-      0
-    ),
+    allTime: sum("total"),
+    last365Days:
+      rolling.contributionCalendar.totalContributions,
+    last365DaysCalendar,
 
-    // Main rolling-year figure for the dashboard.
-    last365Days: recentCalendar.totalContributions,
-
-    commitContributionsAllYears: yearly.reduce(
-      (sum, item) => sum + item.commits,
-      0
-    ),
-
+    commitContributionsAllYears: sum("commits"),
     commitContributionsLast365Days:
-      recent.totalCommitContributions,
+      rolling.totalCommitContributions,
 
-    issuesAllYears: yearly.reduce(
-      (sum, item) => sum + item.issues,
-      0
-    ),
+    issuesAllYears: sum("issues"),
+    pullRequestsAllYears: sum("pullRequests"),
+    pullRequestReviewsAllYears: sum("pullRequestReviews"),
 
-    pullRequestsAllYears: yearly.reduce(
-      (sum, item) => sum + item.pullRequests,
-      0
-    ),
-
-    pullRequestReviewsAllYears: yearly.reduce(
-      (sum, item) => sum + item.pullRequestReviews,
-      0
-    ),
-
+    restrictedContributionsAllYears:
+      sum("restrictedContributions"),
     restrictedContributionsLast365Days:
-      recent.restrictedContributionsCount,
+      rolling.restrictedContributionsCount,
 
+    earliestYear,
     currentYear,
-
-    // Rolling 365-day daily data for the full contribution graph.
-    last365DaysCalendar: getDailyContributions(recentCalendar),
-
-    // Retain calendar-year data for yearly breakdowns.
     yearly,
 
-    // Required by the existing HTML's calendar-year graph.
-    currentYearCalendar: currentYearData
-      ? currentYearData.days
-      : []
+    allHistoryCalendar: yearly.flatMap(item => item.days),
+
+    currentYearCalendar:
+      yearly.find(item => item.year === currentYear)?.days || []
   };
 }
 
-// Count commits authored by this GitHub user on each
-// repository's default branch, including accessible private repos.
-// This is separate from contribution-graph commit counts.
-async function getRepositoryCommitCount(repo, username) {
-  let page = 1;
+async function getRepositoryCommits(repositories, username) {
+  const yearlyTotals = {};
+  const perRepository = [];
+
   let total = 0;
+  let currentYearTotal = 0;
 
-  while (true) {
-    const endpoint =
-      `/repos/${repo.full_name}/commits` +
-      `?author=${encodeURIComponent(username)}` +
-      `&per_page=100&page=${page}`;
+  const currentYear = new Date().getUTCFullYear();
 
-    let batch;
+  for (const repo of repositories) {
+    let repoTotal = 0;
+    let repoCurrentYear = 0;
 
-    try {
-      batch = await github(endpoint);
-    } catch (error) {
-      // Empty repositories can return HTTP 409 for this endpoint.
-      if (String(error.message).includes("409")) {
-        return 0;
+    for (let page = 1; ; page++) {
+      let commits;
+
+      try {
+        commits = await github(
+          `/repos/${repo.full_name}/commits?author=${encodeURIComponent(username)}&per_page=100&page=${page}`
+        );
+      } catch (error) {
+        if (
+          String(error.message).includes(
+            "GitHub API error 409"
+          )
+        ) {
+          break;
+        }
+
+        throw error;
       }
 
-      throw error;
+      for (const commit of commits) {
+        repoTotal++;
+
+        const date =
+          commit.commit?.author?.date ||
+          commit.commit?.committer?.date;
+
+        if (!date) continue;
+
+        const year = new Date(date).getUTCFullYear();
+
+        yearlyTotals[year] =
+          (yearlyTotals[year] || 0) + 1;
+
+        if (year === currentYear) {
+          repoCurrentYear++;
+        }
+      }
+
+      if (commits.length < 100) break;
     }
 
-    total += batch.length;
+    total += repoTotal;
+    currentYearTotal += repoCurrentYear;
 
-    if (batch.length < 100) {
-      break;
-    }
-
-    page++;
-  }
-
-  return total;
-}
-
-async function getRepositoryCommitStats(repositories, username) {
-  const results = [];
-
-  // Sequential requests help avoid sending too many requests
-  // to the API at once.
-  for (const repo of repositories) {
-    console.log(`Counting commits: ${repo.full_name}`);
-
-    const count = await getRepositoryCommitCount(repo, username);
-
-    results.push({
-      fullName: repo.full_name,
+    perRepository.push({
+      name: repo.name,
+      url: repo.html_url,
       isPrivate: repo.private,
-      count
+      total: repoTotal,
+      currentYear: repoCurrentYear
     });
+
+    console.log(
+      `Repository commits: ${repo.name}=${repoTotal}; ` +
+      `${currentYear}=${repoCurrentYear}`
+    );
   }
 
   return {
-    total: results.reduce((sum, item) => sum + item.count, 0),
+    total,
+    currentYear,
+    currentYearTotal,
 
-    // Only public repository identities are exposed in this list.
-    publicDetails: results
-      .filter(item => !item.isPrivate)
-      .map(item => ({
-        name: item.fullName.split("/").pop(),
-        commits: item.count
+    yearly: Object.entries(yearlyTotals)
+      .map(([year, count]) => ({
+        year: Number(year),
+        count
       }))
+      .sort((a, b) => a.year - b.year),
+
+    repositories: perRepository
   };
 }
 
@@ -344,26 +495,22 @@ function aggregateLanguages(languageObjects) {
 }
 
 async function getLanguages(repositories) {
-  const languageResults = await Promise.all(
-    repositories.map(async repo => {
-      const languages = await github(
+  const results = await Promise.all(
+    repositories.map(async repo => ({
+      isPrivate: repo.private,
+      languages: await github(
         repo.languages_url.replace(API, "")
-      );
-
-      return {
-        isPrivate: repo.private,
-        languages
-      };
-    })
+      )
+    }))
   );
 
   return {
     allAccessibleLanguages: aggregateLanguages(
-      languageResults.map(item => item.languages)
+      results.map(item => item.languages)
     ),
 
     publicLanguages: aggregateLanguages(
-      languageResults
+      results
         .filter(item => !item.isPrivate)
         .map(item => item.languages)
     )
@@ -380,36 +527,27 @@ async function main() {
   const publicRepos = repositories.filter(repo => !repo.private);
   const privateRepos = repositories.filter(repo => repo.private);
 
-  const starsAllAccessible = repositories.reduce(
-    (sum, repo) => sum + repo.stargazers_count,
-    0
+  console.log(
+    `Repositories found: ${repositories.length} total, ` +
+    `${publicRepos.length} public, ${privateRepos.length} private.`
   );
 
-  const forksAllAccessible = repositories.reduce(
-    (sum, repo) => sum + repo.forks_count,
-    0
-  );
+  console.log("Collecting repository commits...");
 
-  const starsPublic = publicRepos.reduce(
-    (sum, repo) => sum + repo.stargazers_count,
-    0
-  );
-
-  const forksPublic = publicRepos.reduce(
-    (sum, repo) => sum + repo.forks_count,
-    0
-  );
-
-  console.log("Collecting language statistics...");
-  const languages = await getLanguages(repositories);
-
-  console.log("Collecting contribution history...");
-  const contributions = await getContributionStats(username);
-
-  console.log("Counting commits across accessible repositories...");
-  const repositoryCommits = await getRepositoryCommitStats(
+  const repositoryCommits = await getRepositoryCommits(
     repositories,
     username
+  );
+
+  console.log("Collecting languages...");
+
+  const languages = await getLanguages(repositories);
+
+  console.log("Collecting contribution graph statistics...");
+
+  const contributions = await getContributionStats(
+    username,
+    profile.created_at
   );
 
   console.log("Collecting issue and pull request totals...");
@@ -428,20 +566,6 @@ async function main() {
     searchCount(`author:${username} type:pr is:merged`)
   ]);
 
-  const closedIssues = Math.max(
-    0,
-    issuesAuthored - openIssuesAuthored
-  );
-
-  const closedUnmergedPullRequests = Math.max(
-    0,
-    pullRequestsAuthored -
-      openPullRequests -
-      mergedPullRequests
-  );
-
-  // Private repository names, descriptions and URLs are never
-  // written into the public repository-details list.
   const publicRepositoryDetails = publicRepos.map(repo => ({
     name: repo.name,
     description: repo.description,
@@ -449,8 +573,24 @@ async function main() {
     stars: repo.stargazers_count,
     forks: repo.forks_count,
     language: repo.language,
-    updatedAt: repo.updated_at
+
+    updatedAt: repo.updated_at,
+
+    commits:
+      repositoryCommits.repositories.find(
+        item => item.name === repo.name
+      )?.total || 0,
+
+    commitsCurrentYear:
+      repositoryCommits.repositories.find(
+        item => item.name === repo.name
+      )?.currentYear || 0
   }));
+
+  const sum = (items, key) => items.reduce(
+    (total, item) => total + Number(item[key] || 0),
+    0
+  );
 
   const stats = {
     generatedAt: new Date().toISOString(),
@@ -467,35 +607,43 @@ async function main() {
       public: publicRepos.length,
       private: privateRepos.length,
 
-      starsReceivedOnAllAccessibleRepos: starsAllAccessible,
-      starsReceivedOnPublicRepos: starsPublic,
+      starsReceivedOnAllAccessibleRepos:
+        sum(repositories, "stargazers_count"),
 
-      forksOfAllAccessibleRepos: forksAllAccessible,
-      forksOfPublicRepos: forksPublic,
+      starsReceivedOnPublicRepos:
+        sum(publicRepos, "stargazers_count"),
+
+      forksOfAllAccessibleRepos:
+        sum(repositories, "forks_count"),
+
+      forksOfPublicRepos:
+        sum(publicRepos, "forks_count"),
 
       publicDetails: publicRepositoryDetails
     },
 
-    contributions: {
-      ...contributions,
-
-      // A separate actual repository-commit count.
-      // This counts commits authored by this user on each
-      // repository's default branch.
-      repositoryCommitsAllRepos: repositoryCommits.total,
-      repositoryCommitsPublicDetails:
-        repositoryCommits.publicDetails
-    },
+    contributions,
+    repositoryCommits,
 
     activity: {
       issuesAuthored,
       openIssuesAuthored,
-      closedIssues,
+
+      closedIssues: Math.max(
+        0,
+        issuesAuthored - openIssuesAuthored
+      ),
 
       pullRequestsAuthored,
       openPullRequests,
       mergedPullRequests,
-      closedUnmergedPullRequests
+
+      closedUnmergedPullRequests: Math.max(
+        0,
+        pullRequestsAuthored -
+          openPullRequests -
+          mergedPullRequests
+      )
     },
 
     publicLanguages: languages.publicLanguages,
@@ -509,35 +657,38 @@ async function main() {
     JSON.stringify(stats, null, 2) + "\n"
   );
 
-  console.log("\nStatistics generated successfully.");
-  console.log(`Username: ${username}`);
-  console.log(`Repositories: ${repositories.length}`);
-  console.log(`Public repositories: ${publicRepos.length}`);
-  console.log(`Private repositories: ${privateRepos.length}`);
+  console.log(`Statistics saved to ${outputPath}`);
+
   console.log(
-    `Contributions in the last 365 days: ${contributions.last365Days}`
+    `Contributions in last 365 days: ${contributions.last365Days}`
   );
+
   console.log(
-    `All-time calendar-year contributions: ${contributions.allTime}`
+    `Full history calendar: ` +
+    `${contributions.allHistoryCalendar.length} days, ` +
+    `from ${contributions.earliestYear} through ` +
+    `${contributions.currentYear}.`
   );
+
   console.log(
-    `Contribution-graph commits across years: ` +
-    `${contributions.commitContributionsAllYears}`
+    `Contribution graph commits in ${contributions.currentYear}: ` +
+    `${contributions.yearly.find(
+      item => item.year === contributions.currentYear
+    )?.commits || 0}`
   );
+
   console.log(
-    `Repository commits across default branches: ` +
-    `${repositoryCommits.total}`
+    `Repository commits in ${repositoryCommits.currentYear}: ` +
+    `${repositoryCommits.currentYearTotal}`
   );
-  console.log(`Issues authored: ${issuesAuthored}`);
-  console.log(`Pull requests authored: ${pullRequestsAuthored}`);
+
   console.log(
-    `Accessible languages: ${languages.allAccessibleLanguages.length}`
+    `Repository totals: ${repositories.length} total, ` +
+    `${publicRepos.length} public, ${privateRepos.length} private`
   );
-  console.log(`Saved to: ${outputPath}`);
 }
 
 main().catch(error => {
-  console.error("Failed to generate GitHub statistics:");
   console.error(error);
   process.exitCode = 1;
 });

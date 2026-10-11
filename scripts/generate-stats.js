@@ -168,10 +168,8 @@ async function getContributionStats(username) {
   const yearly = [];
 
   for (let year = earliestYear; year <= currentYear; year++) {
-    // Use exact calendar-year boundaries.
     const from = new Date(Date.UTC(year, 0, 1));
 
-    // Use an exclusive next-year boundary to avoid overlap.
     const to = year === currentYear
       ? now
       : new Date(Date.UTC(year + 1, 0, 1));
@@ -190,8 +188,6 @@ async function getContributionStats(username) {
       0
     );
 
-    // Preserve GitHub's official calendar total.
-    // Also retain the daily sum to help identify discrepancies.
     yearly.push({
       year,
       total: calendar.totalContributions,
@@ -282,6 +278,21 @@ async function main() {
 
   const profile = await github("/user");
   const username = profile.login;
+
+  // DIAGNOSTIC: test the contribution calendar returned by GitHub.
+  const contributionTest = await getContributionPeriod(
+    username,
+    new Date(Date.UTC(2025, 0, 1)),
+    new Date()
+  );
+
+  console.log("CONTRIBUTION PERMISSION TEST:", {
+    username,
+    totalContributions:
+      contributionTest.contributionCalendar.totalContributions,
+    restrictedContributions:
+      contributionTest.restrictedContributionsCount
+  });
 
   const repositories = await getAllRepositories();
 
